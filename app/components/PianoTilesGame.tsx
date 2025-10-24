@@ -39,6 +39,7 @@ const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
 const TILE_HEIGHT = 128;
 const FPS = 60;
+const CLICK_DELAY = 100; // DOUBLE-CLICK PROTECTION (100ms)
 
 const MELODIES = {
   twinkle: ['c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4','g5','g5','f4','f4','e4','e4','d4','g5','g5','f4','f4','e4','e4','d4','c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4'],
@@ -58,7 +59,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [nextTileId, setNextTileId] = useState(0);
-  const [bgMusicEnabled, setBgMusicEnabled] = useState(true); // Only BG music control
+  const [bgMusicEnabled, setBgMusicEnabled] = useState(true);
   const [countdown, setCountdown] = useState(3);
   const [overlayIndex, setOverlayIndex] = useState(0);
   const animationRef = useRef<number>();
@@ -66,6 +67,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
   const particleIdRef = useRef(0);
+  const lastClickTimeRef = useRef<number>(0); // DOUBLE-CLICK PROTECTION!
   
   const [melodyIndex, setMelodyIndex] = useState(0);
   const melodyKeys = Object.keys(MELODIES);
@@ -73,7 +75,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    return (40 + 1.5 * currentScore) * (FPS / 1000);
+    return (100 + 2.5 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -122,7 +124,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, [gameStarted, gameOver]);
 
   const playSound = (note: string, tileY: number) => {
-    // Piano sounds always play (no check needed)
     const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
     const volume = 0.3 + (normalizedY * 0.7);
     const audio = new Audio(`/piano/sounds/${note}.ogg`);
@@ -169,6 +170,13 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!gameStarted || gameOver || countdown > 0) return;
+
+    // 🚫 PREVENT DOUBLE-CLICK (broken mouse protection!)
+    const now = Date.now();
+    if (now - lastClickTimeRef.current < CLICK_DELAY) {
+      return; // Ignore clicks that are too fast
+    }
+    lastClickTimeRef.current = now;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -387,6 +395,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setCountdown(3);
     setOverlayIndex(0);
     frameCount.current = 0;
+    lastClickTimeRef.current = 0; // Reset double-click protection
     
     setTimeout(() => {
       const column = Math.floor(Math.random() * 4);
@@ -416,6 +425,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setNextTileId(0);
     setCountdown(3);
     setMelodyIndex(0);
+    lastClickTimeRef.current = 0; // Reset double-click protection
   };
 
   const toggleSound = () => {
