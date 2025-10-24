@@ -39,7 +39,7 @@ interface ColumnHighlight {
   column: number;
   opacity: number;
   timestamp: number;
-  type: 'success' | 'error';  // 🎯 NEW: Track highlight type
+  type: 'success' | 'error';
 }
 
 const CANVAS_WIDTH = 288;
@@ -183,15 +183,23 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setFloatingTexts((prev) => [...prev, newText]);
   };
 
-  // 🎯 NEW: Add column highlight with type
+  // 🎯 FIXED: Clear all highlights when error happens
   const addColumnHighlight = (column: number, type: 'success' | 'error' = 'success') => {
     const newHighlight: ColumnHighlight = {
       column,
-      opacity: type === 'error' ? 0.5 : 0.15,  // Stronger opacity for errors
+      opacity: type === 'error' ? 0.5 : 0.15,
       timestamp: Date.now(),
       type,
     };
-    setColumnHighlights((prev) => [...prev, newHighlight]);
+    
+    setColumnHighlights((prev) => {
+      // If error, CLEAR everything and show only this one RED flash
+      if (type === 'error') {
+        return [newHighlight];
+      }
+      // If success, add to existing
+      return [...prev, newHighlight];
+    });
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -210,7 +218,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    // 🎯 Determine which column was clicked
     const clickedColumn = Math.floor(clickX / TILE_WIDTH);
 
     let clickedTile = null;
@@ -265,12 +272,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       });
 
       addFloatingText(currentColumn, comboCount);
-      addColumnHighlight(currentColumn, 'success');  // White flash for success
+      addColumnHighlight(currentColumn, 'success');
       
     } else if (!clickedWhiteTile) {
-      // 🎯 Wrong click - show RED flash on clicked column
       playBuzzer();
-      addColumnHighlight(clickedColumn, 'error');  // RED flash for wrong click
+      addColumnHighlight(clickedColumn, 'error');  // RED flash - clears everything else
       setGameOver(true);
       setOverlayIndex(0);
       consecutiveClicksRef.current = 0;
@@ -329,7 +335,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         
         const updatedHighlights = columnHighlights.map((h) => ({
           ...h,
-          opacity: Math.max(0, h.opacity - (h.type === 'error' ? 0.04 : 0.01)),  // Faster fade for errors
+          opacity: Math.max(0, h.opacity - (h.type === 'error' ? 0.04 : 0.01)),
         }));
         setColumnHighlights(updatedHighlights.filter((h) => h.opacity > 0));
       }
@@ -352,12 +358,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 🎯 Draw column highlights (WHITE for success, RED for error)
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'error') {
-          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;  // RED for errors
+          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
         } else {
-          ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;  // WHITE for success
+          ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
         }
         ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
       });
@@ -378,9 +383,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           const newY = tile.y + speed;
 
           if (newY + TILE_HEIGHT >= CANVAS_HEIGHT && tile.alive) {
-            // 🎯 Tile reached bottom - show RED flash on that column
             playBuzzer();
-            addColumnHighlight(tile.column, 'error');  // RED flash for missed tile
+            addColumnHighlight(tile.column, 'error');
             setGameOver(true);
             setOverlayIndex(0);
             consecutiveClicksRef.current = 0;
