@@ -74,7 +74,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   const getSpeed = (currentScore: number) => {
     // EXACT SAME AS PYTHON MAIN GAME: 200 + 5 * score
-    return (200 + 5 * currentScore) * (FPS / 1000);
+    return (80 + 3 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
