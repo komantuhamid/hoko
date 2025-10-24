@@ -27,8 +27,8 @@ interface FloatingText {
 const CANVAS_WIDTH = 288;
 const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
-const TILE_HEIGHT = 128; // ← OPTIMIZED
-const FPS = 60; // ← 60 FPS SMOOTH
+const TILE_HEIGHT = 128;
+const FPS = 60;
 
 const NOTES = [
   'd-7', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7',
@@ -54,7 +54,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
-  // ⚡ SUPER SLOW START - PRO MODE
   const getSpeed = (currentScore: number) => {
     return (30 + 0.5 * currentScore) * (FPS / 1000);
   };
@@ -82,10 +81,17 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     }
   }, [gameStarted, soundEnabled, countdown]);
 
-  const playSound = (note: string) => {
+  // 🎵 POSITION-SYNCED SOUND (Volume based on tile Y position)
+  const playSound = (note: string, tileY: number) => {
     if (!soundEnabled) return;
+    
+    // Calculate volume based on tile position (0.3 to 1.0)
+    // Bottom of screen = louder, top = quieter
+    const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
+    const volume = 0.3 + (normalizedY * 0.7); // Range: 0.3 to 1.0
+    
     const audio = new Audio(`/piano/sounds/${note}.ogg`);
-    audio.volume = 0.5;
+    audio.volume = volume * 0.6; // Overall multiplier
     audio.play().catch(() => {});
   };
 
@@ -152,7 +158,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     }
 
     if (clickedTile) {
-      playSound(clickedTile.note);
+      // 🎵 PLAY SOUND WITH TILE POSITION
+      playSound(clickedTile.note, clickedTile.y);
       
       setTiles((prev) =>
         prev.map((t) =>
@@ -229,7 +236,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
         setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 50));
 
-        // ⚡ OPTIMIZED SPAWN TIMING
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
           if (lastTile.y >= -TILE_HEIGHT + 50) {
@@ -307,7 +313,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       const firstTile: Tile = {
         id: 0,
         x: column * TILE_WIDTH,
-        y: -TILE_HEIGHT * 2, // ← SPAWN HIGHER
+        y: -TILE_HEIGHT * 2,
         column,
         alive: true,
         clicked: false,
