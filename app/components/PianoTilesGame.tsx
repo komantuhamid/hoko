@@ -58,8 +58,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [nextTileId, setNextTileId] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [bgMusicEnabled, setBgMusicEnabled] = useState(true); // NEW: Separate state for BG music
+  const [bgMusicEnabled, setBgMusicEnabled] = useState(true); // Only BG music control
   const [countdown, setCountdown] = useState(3);
   const [overlayIndex, setOverlayIndex] = useState(0);
   const animationRef = useRef<number>();
@@ -74,7 +73,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    // PERFECT BALANCED SPEED - Same visual speed as Python main game
     return (100 + 2.5 * currentScore) * (FPS / 1000);
   };
 
@@ -82,7 +80,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     if (typeof window !== 'undefined') {
       bgMusicRef.current = new Audio('/piano/sounds/piano-bgmusic.mp3');
       bgMusicRef.current.loop = true;
-      bgMusicRef.current.volume = 0.3; // QUIET BG MUSIC! 🔉
+      bgMusicRef.current.volume = 0.3;
 
       const bgImg = document.createElement('img');
       bgImg.src = '/piano/bg.png';
@@ -98,12 +96,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, []);
 
   useEffect(() => {
-    if (gameStarted && bgMusicEnabled && bgMusicRef.current && countdown <= 0) {  // Changed: uses bgMusicEnabled
+    if (gameStarted && bgMusicEnabled && bgMusicRef.current && countdown <= 0) {
       bgMusicRef.current.play().catch(() => {});
     } else if (bgMusicRef.current) {
       bgMusicRef.current.pause();
     }
-  }, [gameStarted, bgMusicEnabled, countdown]);  // Changed: uses bgMusicEnabled
+  }, [gameStarted, bgMusicEnabled, countdown]);
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
@@ -124,7 +122,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, [gameStarted, gameOver]);
 
   const playSound = (note: string, tileY: number) => {
-    if (!soundEnabled) return;  // Piano sounds use soundEnabled (always ON)
+    // Piano sounds always play (no check needed)
     const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
     const volume = 0.3 + (normalizedY * 0.7);
     const audio = new Audio(`/piano/sounds/${note}.ogg`);
@@ -133,11 +131,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   };
 
   const playBuzzer = useCallback(() => {
-    if (!soundEnabled) return;
     const audio = new Audio('/piano/sounds/piano-buzzer.mp3');
     audio.volume = 0.7;
     audio.play().catch(() => {});
-  }, [soundEnabled]);
+  }, []);
 
   const getNextNote = useCallback(() => {
     const note = currentMelody[melodyIndex % currentMelody.length];
@@ -422,7 +419,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   };
 
   const toggleSound = () => {
-    setBgMusicEnabled(!bgMusicEnabled);  // Changed: Only toggles BG music!
+    setBgMusicEnabled(!bgMusicEnabled);
   };
 
   useEffect(() => {
@@ -489,16 +486,19 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             zIndex: 10,
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/piano/piano.png" 
             alt="Piano"
             style={{ width: '212px', height: '212px' }}
           />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/piano/title.png" 
             alt="Piano Tiles"
             style={{ width: '250px', height: 'auto' }}
           />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/piano/start.png" 
             alt="Start"
