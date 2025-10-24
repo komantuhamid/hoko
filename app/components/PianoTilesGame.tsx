@@ -62,7 +62,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   // ⚡ SLOW START + SMOOTH SPEED
   const getSpeed = (currentScore: number) => {
-    return (50 + 2 * currentScore) * (FPS / 1000);
+    return (30 + 1 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
