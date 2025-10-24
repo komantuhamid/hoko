@@ -28,7 +28,7 @@ const CANVAS_WIDTH = 288;
 const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
 const TILE_HEIGHT = 130;
-const FPS = 30;
+const FPS = 60; // ← 60 FPS FOR SMOOTH PERFORMANCE
 
 const NOTES = [
   'd-7', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7',
@@ -54,8 +54,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
+  // OPTIMIZED SPEED - SLOWER START
   const getSpeed = (currentScore: number) => {
-    return (100 + 2 * currentScore) * (FPS / 1000);
+    return (50 + 1 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -239,8 +240,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         // ANIMATE FLOATING TEXTS
         const updatedTexts = floatingTexts.map((text) => ({
           ...text,
-          y: text.y - 2, // MOVE UP
-          opacity: text.opacity - 0.02, // FADE OUT
+          y: text.y - 2,
+          opacity: text.opacity - 0.02,
         }));
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
