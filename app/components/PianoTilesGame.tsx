@@ -73,8 +73,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    // EXACT SAME AS PYTHON MAIN GAME: 200 + 5 * score
-    return (80 + 3 * currentScore) * (FPS / 1000);
+    // PERFECT BALANCED SPEED!
+    // Python main game: 200 + 5*score at 30 FPS = 6 pixels/frame
+    // React: We want SAME VISUAL SPEED at 60 FPS
+    // So we use HALF the numbers: 100 + 2.5*score
+    return (100 + 2.5 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -321,7 +324,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
-          // Tiles stick perfectly together - NO GAPS!
           if (lastTile.y + speed >= 0) {
             spawnTile(lastTile.y - TILE_HEIGHT);
           }
@@ -337,7 +339,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked) {
-          // NO BORDERS - Perfect sticking!
           ctx.fillStyle = '#000000';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         } else if (tile.clicked) {
