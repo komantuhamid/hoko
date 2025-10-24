@@ -73,8 +73,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    // Better speed - not too slow, not too fast!
-    return (25 + 0.7 * currentScore) * (FPS / 1000);
+    // EXACT SAME AS PYTHON MAIN GAME: 200 + 5 * score
+    return (200 + 5 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -321,8 +321,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
-          // NO GAP! Tiles stick together perfectly
-          if (lastTile.y >= -10) {
+          // Tiles stick perfectly together - NO GAPS!
+          if (lastTile.y + speed >= 0) {
             spawnTile(lastTile.y - TILE_HEIGHT);
           }
         }
