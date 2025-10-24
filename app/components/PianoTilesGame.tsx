@@ -73,7 +73,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    return (30 + 1 * currentScore) * (FPS / 1000);
+    // SLOWER SPEED - Fixed!
+    return (20 + 0.5 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -105,16 +106,17 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
+      // REDUCED PARTICLES FROM 10 TO 5 - Less lag!
       const initialParticles: Particle[] = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 5; i++) {
         initialParticles.push({
           id: particleIdRef.current++,
           x: Math.random() * CANVAS_WIDTH,
           y: Math.random() * CANVAS_HEIGHT,
           size: 15 + Math.random() * 10,
-          speed: 0.5 + Math.random() * 1.5,
+          speed: 0.4 + Math.random() * 1,
           rotation: Math.random() * 360,
-          rotationSpeed: (Math.random() - 0.5) * 4,
+          rotationSpeed: (Math.random() - 0.5) * 3,
         });
       }
       setParticles(initialParticles);
@@ -253,25 +255,28 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
 
-      const updatedParticles = particles.map((p) => {
-        let newY = p.y + p.speed;
-        const newRotation = p.rotation + p.rotationSpeed;
+      // OPTIMIZED PARTICLES - Only update every other frame for less lag
+      if (frameCount.current % 2 === 0) {
+        const updatedParticles = particles.map((p) => {
+          let newY = p.y + p.speed;
+          const newRotation = p.rotation + p.rotationSpeed;
 
-        if (newY > CANVAS_HEIGHT + 50) {
-          newY = -50;
-          return {
-            ...p,
-            x: Math.random() * CANVAS_WIDTH,
-            y: newY,
-            rotation: newRotation,
-          };
-        }
+          if (newY > CANVAS_HEIGHT + 50) {
+            newY = -50;
+            return {
+              ...p,
+              x: Math.random() * CANVAS_WIDTH,
+              y: newY,
+              rotation: newRotation,
+            };
+          }
 
-        return { ...p, y: newY, rotation: newRotation };
-      });
-      setParticles(updatedParticles);
+          return { ...p, y: newY, rotation: newRotation };
+        });
+        setParticles(updatedParticles);
+      }
 
-      updatedParticles.forEach((p) => {
+      particles.forEach((p) => {
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate((p.rotation * Math.PI) / 180);
