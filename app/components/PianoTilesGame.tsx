@@ -383,7 +383,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            backgroundImage: 'url(/piano/bg.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -401,14 +403,14 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           <Image 
             src="/piano/title.png" 
             alt="Piano Tiles"
-            width={200}
-            height={100}
+            width={250}
+            height={80}
           />
           <Image 
             src="/piano/start.png" 
             alt="Start"
-            width={120}
-            height={50}
+            width={150}
+            height={70}
             onClick={startGame}
             style={{ cursor: 'pointer', marginTop: '20px' }}
           />
