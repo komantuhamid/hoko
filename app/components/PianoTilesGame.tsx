@@ -185,7 +185,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const addColumnHighlight = (column: number) => {
     const newHighlight: ColumnHighlight = {
       column,
-      opacity: 0.4,
+      opacity: 0.15,
       timestamp: Date.now(),
     };
     setColumnHighlights((prev) => [...prev, newHighlight]);
@@ -321,7 +321,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         
         const updatedHighlights = columnHighlights.map((h) => ({
           ...h,
-          opacity: Math.max(0, h.opacity - 0.02),
+          opacity: Math.max(0, h.opacity - 0.01),
         }));
         setColumnHighlights(updatedHighlights.filter((h) => h.opacity > 0));
       }
@@ -344,13 +344,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 🎯 Draw column highlights FIRST (semi-transparent gray)
       columnHighlights.forEach((highlight) => {
-        ctx.fillStyle = `rgba(150, 150, 150, ${highlight.opacity * 0.5})`;
+        ctx.fillStyle = `rgba(0, 0, 0, ${highlight.opacity})`;
         ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
       });
 
-      // 🎯 Draw column separators (white lines)
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -397,7 +395,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked) {
+          // 🎯 Black tile (not clicked yet)
           ctx.fillStyle = '#000000';
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+        } else if (tile.clicked) {
+          // 🎯 SEMI-TRANSPARENT DARK GRAY tile (already clicked)
+          ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
