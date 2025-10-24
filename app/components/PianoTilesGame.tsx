@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
-import Image from 'next/image';
 
 interface PianoTilesGameProps {
   onGameOver?: (score: number) => void;
@@ -56,8 +55,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
+  // FIXED SPEED - SLOWER LIKE PYTHON
   const getSpeed = (currentScore: number) => {
-    return (200 + 5 * currentScore) * (FPS / 1000);
+    return (100 + 2 * currentScore) * (FPS / 1000); // ← SLOWED DOWN
   };
 
   useEffect(() => {
@@ -201,11 +201,13 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const gameLoop = () => {
       frameCount.current += 1;
 
-      ctx.fillStyle = '#1a1a2e';
+      // LIGHT BLUE BACKGROUND LIKE PYTHON
+      ctx.fillStyle = '#87CEEB'; // ← SKY BLUE
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+      // GRID LINES
       ctx.strokeStyle = 'white';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
         ctx.beginPath();
         ctx.moveTo(i * TILE_WIDTH, 0);
@@ -244,35 +246,29 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.y - t.initialY < 100));
       }
 
+      // DRAW TILES - HOLLOW/EMPTY LIKE PYTHON
       tiles.forEach((tile) => {
         if (tile.alive) {
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-
-          ctx.strokeStyle = '#bf40bf';
+          // HOLLOW TILE WITH RED BORDER
+          ctx.strokeStyle = '#FF0000'; // ← RED
           ctx.lineWidth = 4;
-          ctx.strokeRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-
-          ctx.strokeStyle = '#19efef';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-        } else if (!tile.clicked) {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+          ctx.strokeRect(tile.x + 2, tile.y + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
         }
       });
 
-      ctx.fillStyle = 'white';
-      ctx.font = '32px Arial';
+      // FLOATING "+1" TEXTS
+      ctx.fillStyle = 'red';
+      ctx.font = 'bold 32px Arial';
       floatingTexts.forEach((text) => {
         ctx.fillText('+1', text.x, text.y);
       });
 
+      // SCORE AT TOP
       ctx.fillStyle = 'white';
-      ctx.font = '32px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`Score : ${score}`, 70, 40);
-      ctx.fillText(`High : ${highScore}`, 200, 40);
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Score : ${score}`, 10, 30);
+      ctx.fillText(`High : ${highScore}`, 160, 30);
 
       if (!gameOver) {
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -394,30 +390,22 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             zIndex: 10,
           }}
         >
-<Image 
-  src="/piano/piano.png" 
-  alt="Piano"
-  width={212}
-  height={212}
-  unoptimized  // ← ADD THIS
-/>
-<Image 
-  src="/piano/title.png" 
-  alt="Piano Tiles"
-  width={250}
-  height={80}
-  unoptimized  // ← ADD THIS
-/>
-<Image 
-  src="/piano/start.png" 
-  alt="Start"
-  width={150}
-  height={70}
-  onClick={startGame}
-  style={{ cursor: 'pointer', marginTop: '20px' }}
-  unoptimized  // ← ADD THIS
-/>
-
+          <img 
+            src="/piano/piano.png" 
+            alt="Piano"
+            style={{ width: '212px', height: '212px' }}
+          />
+          <img 
+            src="/piano/title.png" 
+            alt="Piano Tiles"
+            style={{ width: '250px', height: 'auto' }}
+          />
+          <img 
+            src="/piano/start.png" 
+            alt="Start"
+            onClick={startGame}
+            style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
+          />
         </div>
       )}
 
@@ -446,7 +434,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         style={{
           display: 'block',
           cursor: gameStarted && !gameOver && countdown <= 0 ? 'pointer' : 'default',
-          background: '#1a1a2e',
+          background: '#87CEEB',
         }}
       />
 
