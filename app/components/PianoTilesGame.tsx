@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import NextImage from 'next/image';
 import { X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 
 interface PianoTilesGameProps {
@@ -124,10 +123,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   const playSound = (note: string, tileY: number) => {
     if (!soundEnabled) return;
-    
     const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
     const volume = 0.3 + (normalizedY * 0.7);
-    
     const audio = new Audio(`/piano/sounds/${note}.ogg`);
     audio.volume = volume * 0.6;
     audio.play().catch(() => {});
@@ -488,25 +485,21 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             zIndex: 10,
           }}
         >
-          <NextImage 
+          <img 
             src="/piano/piano.png" 
             alt="Piano"
-            width={212}
-            height={212}
+            style={{ width: '212px', height: '212px' }}
           />
-          <NextImage 
+          <img 
             src="/piano/title.png" 
             alt="Piano Tiles"
-            width={250}
-            height={60}
+            style={{ width: '250px', height: 'auto' }}
           />
-          <NextImage 
+          <img 
             src="/piano/start.png" 
             alt="Start"
             onClick={startGame}
-            width={150}
-            height={50}
-            style={{ cursor: 'pointer', marginTop: '20px' }}
+            style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
           />
         </div>
       )}
