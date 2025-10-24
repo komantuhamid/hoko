@@ -344,8 +344,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 🎯 Draw WHITE column highlights
       columnHighlights.forEach((highlight) => {
-        ctx.fillStyle = `rgba(0, 0, 0, ${highlight.opacity})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
         ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
       });
 
@@ -395,11 +396,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked) {
-          // 🎯 Black tile (not clicked yet)
           ctx.fillStyle = '#000000';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         } else if (tile.clicked) {
-          // 🎯 SEMI-TRANSPARENT DARK GRAY tile (already clicked)
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
@@ -408,7 +407,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
-        ctx.fillStyle = '#FF0000';
+        ctx.fillStyle = '#FFFFFF';  // 🎯 WHITE TEXT
         ctx.font = 'bold 36px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(text.text, text.x, text.y);
