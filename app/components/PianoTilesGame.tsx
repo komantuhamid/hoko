@@ -28,9 +28,8 @@ const CANVAS_WIDTH = 288;
 const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
 const TILE_HEIGHT = 128;
-const FPS = 60; // ← SMOOTH 60 FPS
+const FPS = 60;
 
-// 🎵 ALL 5 MELODIES
 const MELODIES = {
   twinkle: ['c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4','g5','g5','f4','f4','e4','e4','d4','g5','g5','f4','f4','e4','e4','d4','c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4'],
   happy_birthday: ["g4","g4","a4","g4","c5","b4","g4","g4","a4","g4","d5","c5","g4","g4","g5","e5","c5","b4","a4","f5","f5","e5","c5","d5","c5"],
@@ -60,9 +59,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const [currentMelodyKey, setCurrentMelodyKey] = useState(melodyKeys[Math.floor(Math.random() * melodyKeys.length)]);
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
-  // ⚡ SLOW START + SMOOTH SPEED
   const getSpeed = (currentScore: number) => {
-    return (30 + 1 * currentScore) * (FPS / 1000);
+    return (30 + 1 * currentScore) * (FPS / 1000); // ← SLOW SPEED
   };
 
   useEffect(() => {
@@ -148,18 +146,22 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const clickY = e.clientY - rect.top;
 
     let clickedTile = null;
+    let clickedWhiteTile = false; // ← FIX: Track white tile clicks
 
     for (const tile of tiles) {
       if (
-        tile.alive &&
-        !tile.clicked &&
         clickX >= tile.x &&
         clickX <= tile.x + TILE_WIDTH &&
         clickY >= tile.y &&
         clickY <= tile.y + TILE_HEIGHT
       ) {
-        clickedTile = tile;
-        break;
+        if (tile.alive && !tile.clicked) {
+          clickedTile = tile; // ← Black tile = GOOD
+          break;
+        } else if (tile.clicked) {
+          clickedWhiteTile = true; // ← White tile = IGNORE
+          break;
+        }
       }
     }
 
@@ -181,7 +183,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       });
 
       addFloatingText(clickedTile.x, clickedTile.y);
-    } else {
+    } else if (!clickedWhiteTile) { // ← FIX: Only game over if NOT white tile
       playBuzzer();
       setGameOver(true);
       setOverlayIndex(0);
@@ -225,7 +227,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
-          if (!tile.alive && !tile.clicked) return tile; // ← SKIP OPTIMIZATION
+          if (!tile.alive && !tile.clicked) return tile;
           
           const newY = tile.y + speed;
 
@@ -239,7 +241,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           return { ...tile, y: newY };
         });
 
-        setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 100)); // ← LARGER BUFFER
+        setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 100));
 
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
