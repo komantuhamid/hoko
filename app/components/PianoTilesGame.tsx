@@ -168,7 +168,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setFloatingTexts((prev) => [...prev, newText]);
   };
 
-  // 🎯 NEW: Draw visual guidance lines between close tiles
+  // 🎯 Draw visual guidance lines between close tiles
   const drawGuidanceLines = (ctx: CanvasRenderingContext2D, visibleTiles: Tile[]) => {
     const aliveTiles = visibleTiles.filter(t => t.alive && !t.clicked).sort((a, b) => a.y - b.y);
     
@@ -176,7 +176,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       const currentTile = aliveTiles[i];
       const nextTile = aliveTiles[i + 1];
       
-      // Check if tiles are close enough (within 2 tile heights)
+      // Check if tiles are close enough (within 2.5 tile heights)
       const distance = Math.abs(nextTile.y - currentTile.y);
       if (distance < TILE_HEIGHT * 2.5) {
         const opacity = Math.max(0.2, 1 - (distance / (TILE_HEIGHT * 2.5)));
@@ -199,7 +199,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.moveTo(x1, y1);
         
         // Create smooth curve
-        const controlPointY = (y1 + y2) / 2;
         const curvature = (x2 - x1) * 0.3;
         ctx.bezierCurveTo(
           x1 + curvature, y1 + (y2 - y1) * 0.3,
