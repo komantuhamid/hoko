@@ -394,26 +394,30 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             zIndex: 10,
           }}
         >
-          <Image 
-            src="/piano/piano.png" 
-            alt="Piano"
-            width={212}
-            height={212}
-          />
-          <Image 
-            src="/piano/title.png" 
-            alt="Piano Tiles"
-            width={250}
-            height={80}
-          />
-          <Image 
-            src="/piano/start.png" 
-            alt="Start"
-            width={150}
-            height={70}
-            onClick={startGame}
-            style={{ cursor: 'pointer', marginTop: '20px' }}
-          />
+<Image 
+  src="/piano/piano.png" 
+  alt="Piano"
+  width={212}
+  height={212}
+  unoptimized  // ← ADD THIS
+/>
+<Image 
+  src="/piano/title.png" 
+  alt="Piano Tiles"
+  width={250}
+  height={80}
+  unoptimized  // ← ADD THIS
+/>
+<Image 
+  src="/piano/start.png" 
+  alt="Start"
+  width={150}
+  height={70}
+  onClick={startGame}
+  style={{ cursor: 'pointer', marginTop: '20px' }}
+  unoptimized  // ← ADD THIS
+/>
+
         </div>
       )}
 
