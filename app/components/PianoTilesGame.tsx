@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 
 interface PianoTilesGameProps {
   onGameOver?: (score: number) => void;
@@ -13,7 +14,7 @@ interface Tile {
   column: number;
   alive: boolean;
   clicked: boolean;
-  note: string; // Sound file name
+  note: string;
 }
 
 const CANVAS_WIDTH = 288;
@@ -24,7 +25,6 @@ const INITIAL_SPEED = 3;
 const SPEED_INCREMENT = 0.5;
 const MAX_SPEED = 12;
 
-// Available notes for random selection
 const NOTES = [
   'd-7', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7',
   'f1', 'f-1', 'f2', 'f-2', 'f3', 'f-3', 'f4', 'f-4',
@@ -46,11 +46,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
   const lastSpawnTime = useRef<number>(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize background music
   useEffect(() => {
-    bgMusicRef.current = new Audio('/piano/sounds/piano-bgmusic.mp3');
-    bgMusicRef.current.loop = true;
-    bgMusicRef.current.volume = 0.3;
+    if (typeof window !== 'undefined') {
+      bgMusicRef.current = new Audio('/piano/sounds/piano-bgmusic.mp3');
+      bgMusicRef.current.loop = true;
+      bgMusicRef.current.volume = 0.3;
+    }
     
     return () => {
       if (bgMusicRef.current) {
@@ -60,7 +61,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
     };
   }, []);
 
-  // Play background music when game starts
   useEffect(() => {
     if (gameStarted && soundEnabled && bgMusicRef.current) {
       bgMusicRef.current.play().catch(() => {});
@@ -71,7 +71,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
 
   const playSound = (note: string) => {
     if (!soundEnabled) return;
-    
     const audio = new Audio(`/piano/sounds/${note}.ogg`);
     audio.volume = 0.5;
     audio.play().catch(() => {});
@@ -79,7 +78,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
 
   const playBuzzer = () => {
     if (!soundEnabled) return;
-    
     const audio = new Audio('/piano/sounds/piano-buzzer.mp3');
     audio.volume = 0.7;
     audio.play().catch(() => {});
@@ -268,26 +266,32 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
         boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
       }}
     >
-      {/* Sound Toggle Button */}
-      <button
-        onClick={toggleSound}
-        style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          zIndex: 20,
-          background: 'rgba(0,0,0,0.7)',
-          border: '2px solid #feca57',
-          borderRadius: '50%',
-          width: '40px',
-          height: '40px',
-          cursor: 'pointer',
-          fontSize: '20px',
-        }}
-      >
-        {soundEnabled ? '🔊' : '🔇'}
-      </button>
+      {/* Sound Toggle - Top Right */}
+      {gameStarted && !gameOver && (
+        <button
+          onClick={toggleSound}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 20,
+            background: 'rgba(0,0,0,0.7)',
+            border: '2px solid #feca57',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#feca57',
+          }}
+        >
+          {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+        </button>
+      )}
 
+      {/* Start Menu */}
       {!gameStarted && !gameOver && (
         <div
           style={{
@@ -305,30 +309,24 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
             zIndex: 10,
           }}
         >
-          <h1 style={{ fontSize: '40px', color: '#feca57', margin: 0 }}>
-            PIANO TILES
-          </h1>
+          <img 
+            src="/piano/title.png" 
+            alt="Piano Tiles"
+            style={{ width: '200px', marginBottom: '10px' }}
+          />
           <p style={{ fontSize: '16px', color: '#aaa', textAlign: 'center', padding: '0 20px' }}>
             Tap the black tiles as fast as you can!
           </p>
-          <button
+          <img 
+            src="/piano/start.png" 
+            alt="Start"
             onClick={startGame}
-            style={{
-              padding: '15px 50px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: 'white',
-              background: 'linear-gradient(135deg, #feca57 0%, #ff9ff3 100%)',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-            }}
-          >
-            START
-          </button>
+            style={{ width: '120px', cursor: 'pointer' }}
+          />
         </div>
       )}
 
+      {/* Game Canvas */}
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
@@ -341,62 +339,128 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
         }}
       />
 
+      {/* Game Over Screen */}
       {gameOver && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.95)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '20px',
-            zIndex: 10,
-          }}
-        >
-          <h2 style={{ fontSize: '36px', color: '#feca57', margin: 0 }}>
-            GAME OVER
-          </h2>
-          <p style={{ fontSize: '28px', color: 'white', margin: 0 }}>
-            Score: {score}
-          </p>
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <button
-              onClick={startGame}
-              style={{
-                padding: '15px 40px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: 'white',
-                background: 'linear-gradient(135deg, #feca57 0%, #ff9ff3 100%)',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-              }}
-            >
-              TRY AGAIN
-            </button>
-            <button
-              onClick={resetGame}
-              style={{
-                padding: '15px 40px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: 'white',
-                background: 'transparent',
-                border: '2px solid #666',
-                borderRadius: '10px',
-                cursor: 'pointer',
-              }}
-            >
-              MENU
-            </button>
+        <>
+          {/* Red Overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: 'url(/piano/red-overlay.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.7,
+              zIndex: 5,
+            }}
+          />
+          
+          {/* Game Over Content */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px',
+              zIndex: 10,
+            }}
+          >
+            <h2 style={{ 
+              fontSize: '48px', 
+              color: 'white', 
+              margin: 0,
+              fontWeight: 'bold',
+              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            }}>
+              GAME OVER
+            </h2>
+            
+            <p style={{ 
+              fontSize: '24px', 
+              color: 'white', 
+              margin: 0,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+            }}>
+              Score: {score}
+            </p>
+            
+            {/* Action Buttons */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '20px',
+              marginTop: '20px',
+            }}>
+              {/* Close Button */}
+              <button
+                onClick={resetGame}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  background: 'rgba(255,255,255,0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                  color: '#000',
+                }}
+              >
+                <X size={32} />
+              </button>
+              
+              {/* Restart Button */}
+              <button
+                onClick={startGame}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  background: 'rgba(255,255,255,0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                  color: '#000',
+                }}
+              >
+                <RotateCcw size={32} />
+              </button>
+              
+              {/* Sound Toggle */}
+              <button
+                onClick={toggleSound}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  background: 'rgba(255,255,255,0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                  color: '#000',
+                }}
+              >
+                {soundEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
