@@ -22,6 +22,7 @@ interface FloatingText {
   x: number;
   y: number;
   opacity: number;
+  text: string;
 }
 
 interface Particle {
@@ -68,6 +69,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const bgImageRef = useRef<HTMLImageElement | null>(null);
   const particleIdRef = useRef(0);
   const lastClickTimeRef = useRef<number>(0);
+  
+  // 🎯 COMBO SYSTEM
+  const lastClickedColumnRef = useRef<number>(-1);
+  const consecutiveClicksRef = useRef<number>(0);
+  const lastClickedTimeRef = useRef<number>(0);
   
   const [melodyIndex, setMelodyIndex] = useState(0);
   const melodyKeys = Object.keys(MELODIES);
@@ -158,58 +164,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setNextTileId((prev) => prev + 1);
   }, [nextTileId, getNextNote]);
 
-  const addFloatingText = (x: number, y: number) => {
+  const addFloatingText = (x: number, y: number, comboCount: number) => {
     const newText: FloatingText = {
       id: Date.now(),
       x: x + TILE_WIDTH / 2,
       y: y + TILE_HEIGHT / 2,
       opacity: 1,
+      text: `+${comboCount}`,
     };
     setFloatingTexts((prev) => [...prev, newText]);
-  };
-
-  // 🎯 Draw visual guidance lines between close tiles
-  const drawGuidanceLines = (ctx: CanvasRenderingContext2D, visibleTiles: Tile[]) => {
-    const aliveTiles = visibleTiles.filter(t => t.alive && !t.clicked).sort((a, b) => a.y - b.y);
-    
-    for (let i = 0; i < aliveTiles.length - 1; i++) {
-      const currentTile = aliveTiles[i];
-      const nextTile = aliveTiles[i + 1];
-      
-      // Check if tiles are close enough (within 2.5 tile heights)
-      const distance = Math.abs(nextTile.y - currentTile.y);
-      if (distance < TILE_HEIGHT * 2.5) {
-        const opacity = Math.max(0.2, 1 - (distance / (TILE_HEIGHT * 2.5)));
-        
-        // Calculate center points
-        const x1 = currentTile.x + TILE_WIDTH / 2;
-        const y1 = currentTile.y + TILE_HEIGHT;
-        const x2 = nextTile.x + TILE_WIDTH / 2;
-        const y2 = nextTile.y;
-        
-        // Draw curved line
-        ctx.save();
-        ctx.strokeStyle = `rgba(100, 150, 255, ${opacity * 0.6})`;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `rgba(100, 150, 255, ${opacity * 0.8})`;
-        
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        
-        // Create smooth curve
-        const curvature = (x2 - x1) * 0.3;
-        ctx.bezierCurveTo(
-          x1 + curvature, y1 + (y2 - y1) * 0.3,
-          x2 - curvature, y2 - (y2 - y1) * 0.3,
-          x2, y2
-        );
-        
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -257,19 +220,41 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         )
       );
       
+      // 🎯 COMBO DETECTION
+      const currentColumn = clickedTile.column;
+      const timeSinceLastClick = now - lastClickedTimeRef.current;
+      
+      // Reset combo if:
+      // 1. Different column
+      // 2. Too much time passed (more than 2 seconds)
+      if (currentColumn !== lastClickedColumnRef.current || timeSinceLastClick > 2000) {
+        consecutiveClicksRef.current = 1;
+      } else {
+        // Same column, increment combo
+        consecutiveClicksRef.current += 1;
+      }
+      
+      lastClickedColumnRef.current = currentColumn;
+      lastClickedTimeRef.current = now;
+      
+      const comboCount = consecutiveClicksRef.current;
+      
       setScore((prev) => {
-        const newScore = prev + 1;
+        const newScore = prev + comboCount;
         if (newScore > highScore) {
           setHighScore(newScore);
         }
         return newScore;
       });
 
-      addFloatingText(clickedTile.x, clickedTile.y);
+      addFloatingText(clickedTile.x, clickedTile.y, comboCount);
     } else if (!clickedWhiteTile) {
       playBuzzer();
       setGameOver(true);
       setOverlayIndex(0);
+      // Reset combo on game over
+      consecutiveClicksRef.current = 0;
+      lastClickedColumnRef.current = -1;
     }
   };
 
@@ -341,9 +326,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 🎯 Draw guidance lines BEFORE tiles (so lines appear behind)
-      drawGuidanceLines(ctx, tiles);
-
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -363,6 +345,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             playBuzzer();
             setGameOver(true);
             setOverlayIndex(0);
+            // Reset combo
+            consecutiveClicksRef.current = 0;
+            lastClickedColumnRef.current = -1;
             return { ...tile, y: newY, alive: false };
           }
 
@@ -402,7 +387,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillStyle = '#FF0000';
         ctx.font = 'bold 36px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('+1', text.x, text.y);
+        ctx.fillText(text.text, text.x, text.y);
         ctx.restore();
       });
 
@@ -443,6 +428,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     frameCount.current = 0;
     lastClickTimeRef.current = 0;
     
+    // Reset combo
+    consecutiveClicksRef.current = 0;
+    lastClickedColumnRef.current = -1;
+    lastClickedTimeRef.current = 0;
+    
     setTimeout(() => {
       const column = Math.floor(Math.random() * 4);
       const firstNote = MELODIES[randomKey as keyof typeof MELODIES][0];
@@ -472,6 +462,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setCountdown(3);
     setMelodyIndex(0);
     lastClickTimeRef.current = 0;
+    
+    // Reset combo
+    consecutiveClicksRef.current = 0;
+    lastClickedColumnRef.current = -1;
+    lastClickedTimeRef.current = 0;
   };
 
   const toggleSound = () => {
