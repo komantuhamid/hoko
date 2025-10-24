@@ -59,6 +59,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const [particles, setParticles] = useState<Particle[]>([]);
   const [nextTileId, setNextTileId] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [bgMusicEnabled, setBgMusicEnabled] = useState(true); // NEW: Separate state for BG music
   const [countdown, setCountdown] = useState(3);
   const [overlayIndex, setOverlayIndex] = useState(0);
   const animationRef = useRef<number>();
@@ -73,18 +74,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    // PERFECT BALANCED SPEED!
-    // Python main game: 200 + 5*score at 30 FPS = 6 pixels/frame
-    // React: We want SAME VISUAL SPEED at 60 FPS
-    // So we use HALF the numbers: 100 + 2.5*score
-    return (30 + 1 * currentScore) * (FPS / 1000);
+    // PERFECT BALANCED SPEED - Same visual speed as Python main game
+    return (100 + 2.5 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       bgMusicRef.current = new Audio('/piano/sounds/piano-bgmusic.mp3');
       bgMusicRef.current.loop = true;
-      bgMusicRef.current.volume = 0.8;
+      bgMusicRef.current.volume = 0.3; // QUIET BG MUSIC! 🔉
 
       const bgImg = document.createElement('img');
       bgImg.src = '/piano/bg.png';
@@ -100,12 +98,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, []);
 
   useEffect(() => {
-    if (gameStarted && soundEnabled && bgMusicRef.current && countdown <= 0) {
+    if (gameStarted && bgMusicEnabled && bgMusicRef.current && countdown <= 0) {  // Changed: uses bgMusicEnabled
       bgMusicRef.current.play().catch(() => {});
     } else if (bgMusicRef.current) {
       bgMusicRef.current.pause();
     }
-  }, [gameStarted, soundEnabled, countdown]);
+  }, [gameStarted, bgMusicEnabled, countdown]);  // Changed: uses bgMusicEnabled
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
@@ -126,7 +124,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, [gameStarted, gameOver]);
 
   const playSound = (note: string, tileY: number) => {
-    if (!soundEnabled) return;
+    if (!soundEnabled) return;  // Piano sounds use soundEnabled (always ON)
     const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
     const volume = 0.3 + (normalizedY * 0.7);
     const audio = new Audio(`/piano/sounds/${note}.ogg`);
@@ -424,7 +422,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   };
 
   const toggleSound = () => {
-    setSoundEnabled(!soundEnabled);
+    setBgMusicEnabled(!bgMusicEnabled);  // Changed: Only toggles BG music!
   };
 
   useEffect(() => {
@@ -468,7 +466,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             color: '#feca57',
           }}
         >
-          {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+          {bgMusicEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </button>
       )}
 
@@ -648,7 +646,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                   color: '#000',
                 }}
               >
-                {soundEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
+                {bgMusicEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
               </button>
             </div>
           </div>
