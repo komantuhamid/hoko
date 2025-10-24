@@ -73,8 +73,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
   const getSpeed = (currentScore: number) => {
-    // SLOWER SPEED - Fixed!
-    return (20 + 0.5 * currentScore) * (FPS / 1000);
+    // Better speed - not too slow, not too fast!
+    return (25 + 0.7 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -106,7 +106,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
-      // REDUCED PARTICLES FROM 10 TO 5 - Less lag!
       const initialParticles: Particle[] = [];
       for (let i = 0; i < 5; i++) {
         initialParticles.push({
@@ -255,7 +254,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
 
-      // OPTIMIZED PARTICLES - Only update every other frame for less lag
       if (frameCount.current % 2 === 0) {
         const updatedParticles = particles.map((p) => {
           let newY = p.y + p.speed;
@@ -323,8 +321,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
-          if (lastTile.y >= 0) {
-            spawnTile(-TILE_HEIGHT);
+          // NO GAP! Tiles stick together perfectly
+          if (lastTile.y >= -10) {
+            spawnTile(lastTile.y - TILE_HEIGHT);
           }
         }
 
@@ -338,11 +337,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked) {
+          // NO BORDERS - Perfect sticking!
           ctx.fillStyle = '#000000';
-          ctx.fillRect(tile.x + 2, tile.y + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         } else if (tile.clicked) {
           ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(tile.x + 2, tile.y + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
 
