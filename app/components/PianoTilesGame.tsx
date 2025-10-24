@@ -108,11 +108,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let lastTime = performance.now();
-
     const gameLoop = (currentTime: number) => {
-      lastTime = currentTime;
-
       ctx.fillStyle = '#1a1a2e';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
