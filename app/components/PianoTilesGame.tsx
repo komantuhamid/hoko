@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
-
+import Image from 'next/image'; // ← Add this at top with other imports
 interface PianoTilesGameProps {
   onGameOver?: (score: number) => void;
 }
@@ -257,7 +257,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       const updatedParticles = particles.map((p) => {
         let newY = p.y + p.speed;
-        let newRotation = p.rotation + p.rotationSpeed;
+        const newRotation = p.rotation + p.rotationSpeed; // ← FIXED
 
         if (newY > CANVAS_HEIGHT + 50) {
           newY = -50;
