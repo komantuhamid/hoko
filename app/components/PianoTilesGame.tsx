@@ -28,18 +28,14 @@ const CANVAS_WIDTH = 288;
 const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
 const TILE_HEIGHT = 128;
-const FPS = 30; // ← BACK TO 30 FPS
+const FPS = 60; // ← SMOOTH 60 FPS
 
-// 🎵 ALL 5 MELODIES FROM PYTHON GAME
+// 🎵 ALL 5 MELODIES
 const MELODIES = {
   twinkle: ['c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4','g5','g5','f4','f4','e4','e4','d4','g5','g5','f4','f4','e4','e4','d4','c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4'],
-  
   happy_birthday: ["g4","g4","a4","g4","c5","b4","g4","g4","a4","g4","d5","c5","g4","g4","g5","e5","c5","b4","a4","f5","f5","e5","c5","d5","c5"],
-  
   jan_gan_man: ['c5','d5','e5','e5','e5','e5','e5','e5','e5','e5','e5','d5','e5','f5','e5','e5','e5','d5','d5','d5','b4','d5','c5','c5','g5','g5','g5','g5','g5','f-5','g5','g5','g5','f-5','a5','g5','f5','f5','f5','e5','e5','f5','d5','f5','e5','e5','e5','e5','e5','d5','g5','g5','g5','f5','f5','e5','e5','e5','d5','d5','d5','d5','b4','d5','c5','c5','d5','e5','e5','e5','e5','d5','e5','f5','e5','f5','g5','g5','g5','f5','e5','d5','f5','e5','e5','e5','d5','d5','d5','d5','b4','d5','c5','g5','g5','g5','f-5','g5','a5','b5','a5','g5','f5','e5','d5','c5'],
-  
   naruto: ['a4','b4','a4','g4','e4','g4','a4','d4','c4','d4','c4','a3','b3','a4','b4','a4','g4','e4','g4','a4','d4','c4','d4','c4','a3'],
-  
   attack_on_titan: ['c-4','c-4','c-4','b3','b3','d4','d4','c-4','b3','c-4','e4','e4','d4','c-4','b3','a3','g3','c-4','e4','d4','c-4','c-4','g-3','c-4','c-4','c-4','b3','b3','d4','d4','c-4','b3','c-4','e4','e4','d4','c-4','b3','a3','g3','c-4','e4','d4','c-4','c-4','g-3']
 };
 
@@ -59,14 +55,14 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
   
-  // 🎵 MELODY STATE
   const [melodyIndex, setMelodyIndex] = useState(0);
   const melodyKeys = Object.keys(MELODIES);
   const [currentMelodyKey, setCurrentMelodyKey] = useState(melodyKeys[Math.floor(Math.random() * melodyKeys.length)]);
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
+  // ⚡ SLOW START + SMOOTH SPEED
   const getSpeed = (currentScore: number) => {
-    return (200 + 5 * currentScore) * (FPS / 1000); // ← PYTHON FORMULA
+    return (50 + 2 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -110,7 +106,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     audio.play().catch(() => {});
   }, [soundEnabled]);
 
-  // 🎵 GET NEXT NOTE FROM MELODY (NOT RANDOM)
   const getNextNote = useCallback(() => {
     const note = currentMelody[melodyIndex % currentMelody.length];
     setMelodyIndex((prev) => prev + 1);
@@ -126,7 +121,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       column,
       alive: true,
       clicked: false,
-      note: getNextNote(), // ← USE MELODY
+      note: getNextNote(),
     };
     setTiles((prev) => [...prev, newTile]);
     setNextTileId((prev) => prev + 1);
@@ -230,6 +225,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
+          if (!tile.alive && !tile.clicked) return tile; // ← SKIP OPTIMIZATION
+          
           const newY = tile.y + speed;
 
           if (newY + TILE_HEIGHT >= CANVAS_HEIGHT && tile.alive) {
@@ -242,12 +239,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           return { ...tile, y: newY };
         });
 
-        setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 50));
+        setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 100)); // ← LARGER BUFFER
 
-        // ⚡ PYTHON-STYLE SPAWN TIMING
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
-          if (lastTile.y >= 0) { // ← SPAWN WHEN TILE ENTERS SCREEN
+          if (lastTile.y >= 0) {
             spawnTile(-TILE_HEIGHT);
           }
         }
@@ -301,7 +297,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, [tiles, floatingTexts, gameOver, score, highScore, spawnTile, countdown, gameStarted, playBuzzer]);
 
   const startGame = () => {
-    // 🎵 PICK RANDOM MELODY
     const randomKey = melodyKeys[Math.floor(Math.random() * melodyKeys.length)];
     setCurrentMelodyKey(randomKey);
     setMelodyIndex(0);
