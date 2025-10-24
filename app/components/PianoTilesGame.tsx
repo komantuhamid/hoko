@@ -27,8 +27,8 @@ interface FloatingText {
 const CANVAS_WIDTH = 288;
 const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
-const TILE_HEIGHT = 130;
-const FPS = 60; // ← 60 FPS FOR SMOOTH PERFORMANCE
+const TILE_HEIGHT = 128; // ← OPTIMIZED
+const FPS = 60; // ← 60 FPS SMOOTH
 
 const NOTES = [
   'd-7', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7',
@@ -54,9 +54,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
-  // OPTIMIZED SPEED - SLOWER START
+  // ⚡ SUPER SLOW START - PRO MODE
   const getSpeed = (currentScore: number) => {
-    return (50 + 1 * currentScore) * (FPS / 1000);
+    return (30 + 0.5 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -229,11 +229,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
         setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 50));
 
+        // ⚡ OPTIMIZED SPAWN TIMING
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
-          if (lastTile.y + speed >= 0) {
-            const newY = -TILE_HEIGHT - (0 - lastTile.y);
-            spawnTile(newY);
+          if (lastTile.y >= -TILE_HEIGHT + 50) {
+            spawnTile(-TILE_HEIGHT * 1.5);
           }
         }
 
@@ -307,7 +307,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       const firstTile: Tile = {
         id: 0,
         x: column * TILE_WIDTH,
-        y: -TILE_HEIGHT,
+        y: -TILE_HEIGHT * 2, // ← SPAWN HIGHER
         column,
         alive: true,
         clicked: false,
