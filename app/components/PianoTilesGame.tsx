@@ -35,7 +35,6 @@ interface Particle {
   rotationSpeed: number;
 }
 
-// 🎯 NEW: Column highlight tracking
 interface ColumnHighlight {
   column: number;
   opacity: number;
@@ -77,12 +76,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const particleIdRef = useRef(0);
   const lastClickTimeRef = useRef<number>(0);
   
-  // 🎯 COMBO SYSTEM
   const lastClickedColumnRef = useRef<number>(-1);
   const consecutiveClicksRef = useRef<number>(0);
   const lastClickedTimeRef = useRef<number>(0);
   
-  // 🎯 NEW: Column highlights
   const [columnHighlights, setColumnHighlights] = useState<ColumnHighlight[]>([]);
   
   const [melodyIndex, setMelodyIndex] = useState(0);
@@ -174,7 +171,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setNextTileId((prev) => prev + 1);
   }, [nextTileId, getNextNote]);
 
-  // 🎯 NEW: Add floating text in CENTER of column
   const addFloatingText = (column: number, comboCount: number) => {
     const newText: FloatingText = {
       id: Date.now(),
@@ -186,7 +182,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setFloatingTexts((prev) => [...prev, newText]);
   };
 
-  // 🎯 NEW: Add column highlight
   const addColumnHighlight = (column: number) => {
     const newHighlight: ColumnHighlight = {
       column,
@@ -194,45 +189,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       timestamp: Date.now(),
     };
     setColumnHighlights((prev) => [...prev, newHighlight]);
-  };
-
-  const drawGuidanceLines = (ctx: CanvasRenderingContext2D, visibleTiles: Tile[]) => {
-    const aliveTiles = visibleTiles.filter(t => t.alive && !t.clicked).sort((a, b) => a.y - b.y);
-    
-    for (let i = 0; i < aliveTiles.length - 1; i++) {
-      const currentTile = aliveTiles[i];
-      const nextTile = aliveTiles[i + 1];
-      
-      const distance = Math.abs(nextTile.y - currentTile.y);
-      if (distance < TILE_HEIGHT * 2.5) {
-        const opacity = Math.max(0.2, 1 - (distance / (TILE_HEIGHT * 2.5)));
-        
-        const x1 = currentTile.x + TILE_WIDTH / 2;
-        const y1 = currentTile.y + TILE_HEIGHT;
-        const x2 = nextTile.x + TILE_WIDTH / 2;
-        const y2 = nextTile.y;
-        
-        ctx.save();
-        ctx.strokeStyle = `rgba(100, 150, 255, ${opacity * 0.6})`;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `rgba(100, 150, 255, ${opacity * 0.8})`;
-        
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        
-        const curvature = (x2 - x1) * 0.3;
-        ctx.bezierCurveTo(
-          x1 + curvature, y1 + (y2 - y1) * 0.3,
-          x2 - curvature, y2 - (y2 - y1) * 0.3,
-          x2, y2
-        );
-        
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -280,7 +236,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         )
       );
       
-      // 🎯 COMBO DETECTION
       const currentColumn = clickedTile.column;
       const timeSinceLastClick = now - lastClickedTimeRef.current;
       
@@ -303,10 +258,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         return newScore;
       });
 
-      // 🎯 Add floating text in CENTER of column
       addFloatingText(currentColumn, comboCount);
-      
-      // 🎯 Add column highlight
       addColumnHighlight(currentColumn);
       
     } else if (!clickedWhiteTile) {
@@ -367,7 +319,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         });
         setParticles(updatedParticles);
         
-        // 🎯 Update column highlights opacity
         const updatedHighlights = columnHighlights.map((h) => ({
           ...h,
           opacity: Math.max(0, h.opacity - 0.02),
@@ -393,14 +344,13 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      drawGuidanceLines(ctx, tiles);
-
-      // 🎯 Draw column highlights (semi-transparent gray)
+      // 🎯 Draw column highlights FIRST (semi-transparent gray)
       columnHighlights.forEach((highlight) => {
         ctx.fillStyle = `rgba(150, 150, 150, ${highlight.opacity * 0.5})`;
         ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
       });
 
+      // 🎯 Draw column separators (white lines)
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -449,8 +399,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         if (tile.alive && !tile.clicked) {
           ctx.fillStyle = '#000000';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-        } else if (tile.clicked) {
-          // Don't draw anything for clicked tiles - column highlight shows instead
         }
       });
 
