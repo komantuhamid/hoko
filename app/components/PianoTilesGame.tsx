@@ -39,7 +39,7 @@ const CANVAS_HEIGHT = 512;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
 const TILE_HEIGHT = 128;
 const FPS = 60;
-const CLICK_DELAY = 100; // DOUBLE-CLICK PROTECTION (100ms)
+const CLICK_DELAY = 100;
 
 const MELODIES = {
   twinkle: ['c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4','g5','g5','f4','f4','e4','e4','d4','g5','g5','f4','f4','e4','e4','d4','c4','c4','g4','g4','a4','a4','g4','f4','f4','e4','e4','d4','d4','c4'],
@@ -67,7 +67,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
   const particleIdRef = useRef(0);
-  const lastClickTimeRef = useRef<number>(0); // DOUBLE-CLICK PROTECTION!
+  const lastClickTimeRef = useRef<number>(0);
   
   const [melodyIndex, setMelodyIndex] = useState(0);
   const melodyKeys = Object.keys(MELODIES);
@@ -168,13 +168,57 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setFloatingTexts((prev) => [...prev, newText]);
   };
 
+  // 🎯 NEW: Draw visual guidance lines between close tiles
+  const drawGuidanceLines = (ctx: CanvasRenderingContext2D, visibleTiles: Tile[]) => {
+    const aliveTiles = visibleTiles.filter(t => t.alive && !t.clicked).sort((a, b) => a.y - b.y);
+    
+    for (let i = 0; i < aliveTiles.length - 1; i++) {
+      const currentTile = aliveTiles[i];
+      const nextTile = aliveTiles[i + 1];
+      
+      // Check if tiles are close enough (within 2 tile heights)
+      const distance = Math.abs(nextTile.y - currentTile.y);
+      if (distance < TILE_HEIGHT * 2.5) {
+        const opacity = Math.max(0.2, 1 - (distance / (TILE_HEIGHT * 2.5)));
+        
+        // Calculate center points
+        const x1 = currentTile.x + TILE_WIDTH / 2;
+        const y1 = currentTile.y + TILE_HEIGHT;
+        const x2 = nextTile.x + TILE_WIDTH / 2;
+        const y2 = nextTile.y;
+        
+        // Draw curved line
+        ctx.save();
+        ctx.strokeStyle = `rgba(100, 150, 255, ${opacity * 0.6})`;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = `rgba(100, 150, 255, ${opacity * 0.8})`;
+        
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        
+        // Create smooth curve
+        const controlPointY = (y1 + y2) / 2;
+        const curvature = (x2 - x1) * 0.3;
+        ctx.bezierCurveTo(
+          x1 + curvature, y1 + (y2 - y1) * 0.3,
+          x2 - curvature, y2 - (y2 - y1) * 0.3,
+          x2, y2
+        );
+        
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  };
+
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!gameStarted || gameOver || countdown > 0) return;
 
-    // 🚫 PREVENT DOUBLE-CLICK (broken mouse protection!)
     const now = Date.now();
     if (now - lastClickTimeRef.current < CLICK_DELAY) {
-      return; // Ignore clicks that are too fast
+      return;
     }
     lastClickTimeRef.current = now;
 
@@ -298,6 +342,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 🎯 Draw guidance lines BEFORE tiles (so lines appear behind)
+      drawGuidanceLines(ctx, tiles);
+
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -395,7 +442,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setCountdown(3);
     setOverlayIndex(0);
     frameCount.current = 0;
-    lastClickTimeRef.current = 0; // Reset double-click protection
+    lastClickTimeRef.current = 0;
     
     setTimeout(() => {
       const column = Math.floor(Math.random() * 4);
@@ -425,7 +472,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setNextTileId(0);
     setCountdown(3);
     setMelodyIndex(0);
-    lastClickTimeRef.current = 0; // Reset double-click protection
+    lastClickTimeRef.current = 0;
   };
 
   const toggleSound = () => {
