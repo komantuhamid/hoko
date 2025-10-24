@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import NextImage from 'next/image';
 import { X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
-import Image from 'next/image'; // ← Add this at top with other imports
+
 interface PianoTilesGameProps {
   onGameOver?: (score: number) => void;
 }
@@ -82,7 +83,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       bgMusicRef.current.loop = true;
       bgMusicRef.current.volume = 0.8;
 
-      const bgImg = new Image();
+      const bgImg = document.createElement('img');
       bgImg.src = '/piano/bg.png';
       bgImageRef.current = bgImg;
     }
@@ -257,7 +258,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       const updatedParticles = particles.map((p) => {
         let newY = p.y + p.speed;
-        const newRotation = p.rotation + p.rotationSpeed; // ← FIXED
+        const newRotation = p.rotation + p.rotationSpeed;
 
         if (newY > CANVAS_HEIGHT + 50) {
           newY = -50;
@@ -487,21 +488,25 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             zIndex: 10,
           }}
         >
-          <img 
+          <NextImage 
             src="/piano/piano.png" 
             alt="Piano"
-            style={{ width: '212px', height: '212px' }}
+            width={212}
+            height={212}
           />
-          <img 
+          <NextImage 
             src="/piano/title.png" 
             alt="Piano Tiles"
-            style={{ width: '250px', height: 'auto' }}
+            width={250}
+            height={60}
           />
-          <img 
+          <NextImage 
             src="/piano/start.png" 
             alt="Start"
             onClick={startGame}
-            style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
+            width={150}
+            height={50}
+            style={{ cursor: 'pointer', marginTop: '20px' }}
           />
         </div>
       )}
