@@ -13,6 +13,7 @@ interface Tile {
   column: number;
   alive: boolean;
   clicked: boolean;
+  note: string; // Sound file name
 }
 
 const CANVAS_WIDTH = 288;
@@ -23,6 +24,15 @@ const INITIAL_SPEED = 3;
 const SPEED_INCREMENT = 0.5;
 const MAX_SPEED = 12;
 
+// Available notes for random selection
+const NOTES = [
+  'd-7', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7',
+  'f1', 'f-1', 'f2', 'f-2', 'f3', 'f-3', 'f4', 'f-4',
+  'f5', 'f-5', 'f6', 'f-6', 'f7', 'f-7',
+  'g1', 'g-1', 'g2', 'g-2', 'g3', 'g-3', 'g4', 'g-4',
+  'g5', 'g-5', 'g6', 'g-6', 'g7', 'g-7'
+];
+
 const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -31,8 +41,53 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
   const [speed, setSpeed] = useState(INITIAL_SPEED);
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [nextTileId, setNextTileId] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const animationRef = useRef<number>();
   const lastSpawnTime = useRef<number>(0);
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize background music
+  useEffect(() => {
+    bgMusicRef.current = new Audio('/piano/sounds/piano-bgmusic.mp3');
+    bgMusicRef.current.loop = true;
+    bgMusicRef.current.volume = 0.3;
+    
+    return () => {
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
+      }
+    };
+  }, []);
+
+  // Play background music when game starts
+  useEffect(() => {
+    if (gameStarted && soundEnabled && bgMusicRef.current) {
+      bgMusicRef.current.play().catch(() => {});
+    } else if (bgMusicRef.current) {
+      bgMusicRef.current.pause();
+    }
+  }, [gameStarted, soundEnabled]);
+
+  const playSound = (note: string) => {
+    if (!soundEnabled) return;
+    
+    const audio = new Audio(`/piano/sounds/${note}.ogg`);
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  };
+
+  const playBuzzer = () => {
+    if (!soundEnabled) return;
+    
+    const audio = new Audio('/piano/sounds/piano-buzzer.mp3');
+    audio.volume = 0.7;
+    audio.play().catch(() => {});
+  };
+
+  const getRandomNote = () => {
+    return NOTES[Math.floor(Math.random() * NOTES.length)];
+  };
 
   const spawnInitialTiles = useCallback(() => {
     const initialTiles: Tile[] = [];
@@ -45,6 +100,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
         column,
         alive: true,
         clicked: false,
+        note: getRandomNote(),
       });
     }
     setTiles(initialTiles);
@@ -60,6 +116,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
       column,
       alive: true,
       clicked: false,
+      note: getRandomNote(),
     };
     setTiles((prev) => [...prev, newTile]);
     setNextTileId((prev) => prev + 1);
@@ -86,6 +143,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
     );
 
     if (clickedTile) {
+      playSound(clickedTile.note);
+      
       setTiles((prev) =>
         prev.map((t) =>
           t.id === clickedTile.id ? { ...t, clicked: true, alive: false } : t
@@ -127,6 +186,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
         const newY = tile.y + speed;
 
         if (newY > CANVAS_HEIGHT && !tile.clicked) {
+          playBuzzer();
           setGameOver(true);
           onGameOver?.(score);
           return { ...tile, alive: false };
@@ -192,6 +252,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
     setNextTileId(0);
   };
 
+  const toggleSound = () => {
+    setSoundEnabled(!soundEnabled);
+  };
+
   return (
     <div
       style={{
@@ -204,6 +268,26 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver }) => {
         boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
       }}
     >
+      {/* Sound Toggle Button */}
+      <button
+        onClick={toggleSound}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          zIndex: 20,
+          background: 'rgba(0,0,0,0.7)',
+          border: '2px solid #feca57',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          cursor: 'pointer',
+          fontSize: '20px',
+        }}
+      >
+        {soundEnabled ? '🔊' : '🔇'}
+      </button>
+
       {!gameStarted && !gameOver && (
         <div
           style={{
