@@ -77,7 +77,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     // Python main game: 200 + 5*score at 30 FPS = 6 pixels/frame
     // React: We want SAME VISUAL SPEED at 60 FPS
     // So we use HALF the numbers: 100 + 2.5*score
-    return (100 + 2.5 * currentScore) * (FPS / 1000);
+    return (30 + 1 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
