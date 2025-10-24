@@ -21,7 +21,7 @@ interface FloatingText {
   id: number;
   x: number;
   y: number;
-  initialY: number;
+  opacity: number;
 }
 
 const CANVAS_WIDTH = 288;
@@ -47,7 +47,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [nextTileId, setNextTileId] = useState(0);
-  const [nextTextId, setNextTextId] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [countdown, setCountdown] = useState(3);
   const [overlayIndex, setOverlayIndex] = useState(0);
@@ -55,9 +54,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
-  // FIXED SPEED - SLOWER LIKE PYTHON
   const getSpeed = (currentScore: number) => {
-    return (100 + 2 * currentScore) * (FPS / 1000); // ← SLOWED DOWN
+    return (100 + 2 * currentScore) * (FPS / 1000);
   };
 
   useEffect(() => {
@@ -118,13 +116,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
   const addFloatingText = (x: number, y: number) => {
     const newText: FloatingText = {
-      id: nextTextId,
-      x: x - 10,
-      y: y,
-      initialY: y,
+      id: Date.now(),
+      x: x + TILE_WIDTH / 2,
+      y: y + TILE_HEIGHT / 2,
+      opacity: 1,
     };
     setFloatingTexts((prev) => [...prev, newText]);
-    setNextTextId((prev) => prev + 1);
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -170,7 +167,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         return newScore;
       });
 
-      addFloatingText(clickedTile.x + TILE_WIDTH / 2, clickedTile.y);
+      addFloatingText(clickedTile.x, clickedTile.y);
     } else {
       playBuzzer();
       setGameOver(true);
@@ -201,8 +198,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const gameLoop = () => {
       frameCount.current += 1;
 
-      // LIGHT BLUE BACKGROUND LIKE PYTHON
-      ctx.fillStyle = '#87CEEB'; // ← SKY BLUE
+      // LIGHT BLUE BACKGROUND
+      ctx.fillStyle = '#87CEEB';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       // GRID LINES
@@ -229,7 +226,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           return { ...tile, y: newY };
         });
 
-        setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT));
+        setTiles(updatedTiles.filter((t) => t.y < CANVAS_HEIGHT + 50));
 
         if (tiles.length > 0) {
           const lastTile = tiles[tiles.length - 1];
@@ -239,28 +236,37 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           }
         }
 
+        // ANIMATE FLOATING TEXTS
         const updatedTexts = floatingTexts.map((text) => ({
           ...text,
-          y: text.y + speed,
+          y: text.y - 2, // MOVE UP
+          opacity: text.opacity - 0.02, // FADE OUT
         }));
-        setFloatingTexts(updatedTexts.filter((t) => t.y - t.initialY < 100));
+        setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
-      // DRAW TILES - HOLLOW/EMPTY LIKE PYTHON
+      // DRAW TILES
       tiles.forEach((tile) => {
-        if (tile.alive) {
-          // HOLLOW TILE WITH RED BORDER
-          ctx.strokeStyle = '#FF0000'; // ← RED
-          ctx.lineWidth = 4;
-          ctx.strokeRect(tile.x + 2, tile.y + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
+        if (tile.alive && !tile.clicked) {
+          // BLACK TILE (NOT CLICKED YET)
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(tile.x + 2, tile.y + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
+        } else if (tile.clicked) {
+          // WHITE TILE (CLICKED)
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(tile.x + 2, tile.y + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
         }
       });
 
-      // FLOATING "+1" TEXTS
-      ctx.fillStyle = 'red';
-      ctx.font = 'bold 32px Arial';
+      // DRAW FLOATING "+1" TEXTS
       floatingTexts.forEach((text) => {
+        ctx.save();
+        ctx.globalAlpha = text.opacity;
+        ctx.fillStyle = '#FF0000';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
         ctx.fillText('+1', text.x, text.y);
+        ctx.restore();
       });
 
       // SCORE AT TOP
@@ -291,7 +297,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setTiles([]);
     setFloatingTexts([]);
     setNextTileId(0);
-    setNextTextId(0);
     setCountdown(3);
     setOverlayIndex(0);
     frameCount.current = 0;
