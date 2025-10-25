@@ -78,6 +78,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const columnBgImageRef = useRef<HTMLImageElement | null>(null);
   const particleIdRef = useRef(0);
   const lastClickTimeRef = useRef<number>(0);
+  const audioPoolRef = useRef<Map<string, HTMLAudioElement[]>>(new Map());
   
   const lastClickedColumnRef = useRef<number>(-1);
   const consecutiveClicksRef = useRef<number>(0);
@@ -143,13 +144,27 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     }
   }, [gameStarted, gameOver]);
 
-  const playSound = (note: string, tileY: number) => {
+  const playSound = useCallback((note: string, tileY: number) => {
     const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
     const volume = 0.3 + (normalizedY * 0.7);
-    const audio = new Audio(`/piano/sounds/${note}.ogg`);
+    
+    if (!audioPoolRef.current.has(note)) {
+      audioPoolRef.current.set(note, []);
+    }
+    
+    const pool = audioPoolRef.current.get(note)!;
+    let audio = pool.find(a => a.paused || a.ended);
+    
+    if (!audio) {
+      audio = new Audio(`/piano/sounds/${note}.ogg`);
+      pool.push(audio);
+    }
+    
+    audio.pause();
+    audio.currentTime = 0;
     audio.volume = volume * 0.6;
     audio.play().catch(() => {});
-  };
+  }, []);
 
   const playBuzzer = useCallback(() => {
     const audio = new Audio('/piano/sounds/piano-buzzer.mp3');
@@ -284,11 +299,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     } else if (!clickedWhiteTile) {
       playBuzzer();
       
-      // ADD NEW RED ERROR TILE at click position
       const errorTile: Tile = {
         id: nextTileId,
         x: clickedColumn * TILE_WIDTH,
-        y: clickY - (TILE_HEIGHT / 2), // Center at click Y position
+        y: clickY - (TILE_HEIGHT / 2),
         column: clickedColumn,
         alive: false,
         clicked: false,
@@ -329,7 +343,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const gameLoop = () => {
       frameCount.current += 1;
 
-      // 1. Draw background
       if (bgImageRef.current && bgImageRef.current.complete) {
         ctx.drawImage(bgImageRef.current, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       } else {
@@ -337,7 +350,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
 
-      // 2. Update particles
       if (frameCount.current % 2 === 0) {
         const updatedParticles = particles.map((p) => {
           let newY = p.y + p.speed;
@@ -364,7 +376,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setColumnHighlights(updatedHighlights.filter((h) => h.opacity > 0));
       }
 
-      // 3. Draw particles
       particles.forEach((p) => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -383,7 +394,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 4. Draw column highlights
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'success') {
           ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
@@ -391,7 +401,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 5. Update tiles
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
           if (!tile.alive && !tile.clicked && !tile.isError) return tile;
@@ -427,7 +436,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
-      // 6. Draw normal alive tiles first
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
           ctx.save();
@@ -508,7 +516,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 7. Draw clicked tiles (gray)
       tiles.forEach((tile) => {
         if (tile.clicked) {
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
@@ -516,15 +523,13 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 8. Draw error tiles LAST on top - TRANSPARENT CHFAF
       tiles.forEach((tile) => {
         if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';  // 0.5 = CHFAF transparent!
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
 
-      // 9. Draw column lines ON TOP
       ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; 
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -534,7 +539,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.stroke();
       }
 
-      // 10. Draw floating texts
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
@@ -545,12 +549,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 11. Draw score
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 24px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText(`Score : ${score}`, 10, 30);
-      ctx.fillText(`High : ${highScore}`, 230, 30);
+      ctx.font = 'bold 28px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${score}`, CANVAS_WIDTH / 2, 35);
 
       if (!gameOver) {
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -564,7 +566,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [tiles, floatingTexts, particles, columnHighlights, gameOver, score, highScore, spawnTile, countdown, gameStarted, playBuzzer]);
+  }, [tiles, floatingTexts, particles, columnHighlights, gameOver, score, highScore, spawnTile, countdown, gameStarted, playBuzzer, playSound]);
 
   const startGame = () => {
     const randomKey = melodyKeys[Math.floor(Math.random() * melodyKeys.length)];
@@ -685,44 +687,57 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         )}
 
         {!gameStarted && !gameOver && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '30px',
-              zIndex: 10,
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/piano/piano.png" 
-              alt="Piano"
-              style={{ width: '212px', height: '212px' }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/piano/title.png" 
-              alt="Piano Tiles"
-              style={{ width: '250px', height: 'auto' }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/piano/start.png" 
-              alt="Start"
-              onClick={startGame}
-              style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
-            />
-          </div>
+          <>
+            <style>{`
+              @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '30px',
+                zIndex: 10,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/piano/piano.png" 
+                alt="Piano"
+                style={{ 
+                  width: '280px', 
+                  height: '280px',
+                  animation: 'spin 3s linear infinite',
+                  marginTop: '-50px'
+                }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/piano/title.png" 
+                alt="Piano Tiles"
+                style={{ width: '250px', height: 'auto' }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/piano/start.png" 
+                alt="Start"
+                onClick={startGame}
+                style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
+              />
+            </div>
+          </>
         )}
 
         {gameStarted && countdown > 0 && (
