@@ -284,21 +284,20 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     } else if (!clickedWhiteTile) {
       playBuzzer();
       
-      let foundTileToMark = false;
+      // ADD NEW RED ERROR TILE at click position
+      const errorTile: Tile = {
+        id: nextTileId,
+        x: clickedColumn * TILE_WIDTH,
+        y: clickY - (TILE_HEIGHT / 2), // Center at click Y position
+        column: clickedColumn,
+        alive: false,
+        clicked: false,
+        note: '',
+        isError: true,
+      };
       
-      setTiles((prev) =>
-        prev.map((t) => {
-          if (
-            t.column === clickedColumn &&
-            !t.clicked &&
-            !foundTileToMark
-          ) {
-            foundTileToMark = true;
-            return { ...t, alive: false, isError: true };
-          }
-          return t;
-        })
-      );
+      setTiles((prev) => [...prev, errorTile]);
+      setNextTileId((prev) => prev + 1);
       
       setGameOver(true);
       setOverlayIndex(0);
@@ -517,10 +516,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 8. Draw error tiles LAST on top
+      // 8. Draw error tiles LAST on top - TRANSPARENT CHFAF
       tiles.forEach((tile) => {
         if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'; 
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';  // 0.5 = CHFAF transparent!
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
