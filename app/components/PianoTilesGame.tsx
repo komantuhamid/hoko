@@ -43,10 +43,10 @@ interface ColumnHighlight {
   type: 'success' | 'error';
 }
 
-const CANVAS_WIDTH = 424;  // 🎯 Farcaster Frame Size!
-const CANVAS_HEIGHT = 695; // 🎯 Farcaster Frame Size!
-const TILE_WIDTH = CANVAS_WIDTH / 4; // 106px per column
-const TILE_HEIGHT = 173;   // Nice tall tiles!
+const CANVAS_WIDTH = 424;  
+const CANVAS_HEIGHT = 695; 
+const TILE_WIDTH = CANVAS_WIDTH / 4; 
+const TILE_HEIGHT = 173;   
 const FPS = 60;
 const CLICK_DELAY = 100;
 
@@ -284,22 +284,45 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     } else if (!clickedWhiteTile) {
       playBuzzer();
       
-      const tileRow = Math.floor(clickY / TILE_HEIGHT);
-      const errorTileY = tileRow * TILE_HEIGHT;
+      // 🎯 NEW LOGIC: Find and mark existing tile as error INSTEAD of creating new one!
+      let foundNormalTile = false;
       
-      const errorTile: Tile = {
-        id: nextTileId,
-        x: clickedColumn * TILE_WIDTH,
-        y: errorTileY,
-        column: clickedColumn,
-        alive: false,
-        clicked: false,
-        note: '',
-        isError: true,
-      };
+      setTiles((prev) =>
+        prev.map((t) => {
+          // Check if this tile is in the clicked column and overlaps with click
+          if (
+            t.column === clickedColumn &&
+            clickY >= t.y &&
+            clickY <= t.y + TILE_HEIGHT &&
+            t.alive &&
+            !t.clicked
+          ) {
+            foundNormalTile = true;
+            return { ...t, alive: false, isError: true };
+          }
+          return t;
+        })
+      );
       
-      setTiles((prev) => [...prev, errorTile]);
-      setNextTileId((prev) => prev + 1);
+      // Only create NEW error tile if no normal tile was found
+      if (!foundNormalTile) {
+        const tileRow = Math.floor(clickY / TILE_HEIGHT);
+        const errorTileY = tileRow * TILE_HEIGHT;
+        
+        const errorTile: Tile = {
+          id: nextTileId,
+          x: clickedColumn * TILE_WIDTH,
+          y: errorTileY,
+          column: clickedColumn,
+          alive: false,
+          clicked: false,
+          note: '',
+          isError: true,
+        };
+        
+        setTiles((prev) => [...prev, errorTile]);
+        setNextTileId((prev) => prev + 1);
+      }
       
       setGameOver(true);
       setOverlayIndex(0);
@@ -396,7 +419,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       // 5. Update tiles
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
-          if (!tile.alive && !tile.clicked) return tile;
+          if (!tile.alive && !tile.clicked && !tile.isError) return tile;
           
           const newY = tile.y + speed;
 
@@ -429,7 +452,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
-      // 6. Draw tiles
+      // 6. Draw normal alive tiles first
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
           ctx.save();
@@ -507,18 +530,27 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius - 5, 0, Math.PI * 2);
           ctx.stroke();
-          
-        } else if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.35)';
-          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-        } else if (tile.clicked) {
+        }
+      });
+
+      // 7. Draw clicked tiles (gray)
+      tiles.forEach((tile) => {
+        if (tile.clicked) {
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
 
-      // 7. 🎯 DRAW COLUMN LINES ON TOP OF EVERYTHING!
-      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // Solid white!
+      // 8. Draw error tiles LAST on top
+      tiles.forEach((tile) => {
+        if (tile.isError) {
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'; 
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+        }
+      });
+
+      // 9. Draw column lines ON TOP
+      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; 
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
         ctx.beginPath();
@@ -527,7 +559,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.stroke();
       }
 
-      // 8. Draw floating texts
+      // 10. Draw floating texts
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
@@ -538,7 +570,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 9. Draw score
+      // 11. Draw score
       ctx.fillStyle = 'white';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'left';
