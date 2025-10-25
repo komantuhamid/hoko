@@ -192,7 +192,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     };
     
     setColumnHighlights((prev) => {
-      // 🎯 If error, clear ALL previous highlights
       if (type === 'error') {
         return [newHighlight];
       }
@@ -273,6 +272,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       addColumnHighlight(currentColumn, 'success');
       
     } else if (!clickedWhiteTile) {
+      // 🎯 WRONG CLICK - Show red on clicked column
       playBuzzer();
       addColumnHighlight(clickedColumn, 'error');
       setGameOver(true);
@@ -356,7 +356,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 🎯 STEP 1: Draw grid lines FIRST
+      // 🎯 Draw grid lines FIRST
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -366,7 +366,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.stroke();
       }
 
-      // 🎯 STEP 2: Draw column highlights SECOND (on top of grid lines)
+      // 🎯 Draw column highlights SECOND (on top)
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'error') {
           ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
@@ -382,8 +382,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           
           const newY = tile.y + speed;
 
+          // 🎯 KEY FIX: Tile reached bottom WITHOUT being clicked
           if (newY + TILE_HEIGHT >= CANVAS_HEIGHT && tile.alive) {
             playBuzzer();
+            // Show RED in the TILE's column (the one that should've been clicked)
             addColumnHighlight(tile.column, 'error');
             setGameOver(true);
             setOverlayIndex(0);
