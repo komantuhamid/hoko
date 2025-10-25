@@ -127,7 +127,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   }, [gameStarted, bgMusicEnabled, countdown]);
 
   useEffect(() => {
-    if (gameStarted && !gameOver) {
+    if (&& !gameOver) {
       const initialParticles: Particle[] = [];
       for (let i = 0; i < 5; i++) {
         initialParticles.push({
@@ -702,37 +702,38 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           </button>
         )}
 
-        {!gameStarted && !gameOver && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '30px',
-              zIndex: 10,
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/piano/piano.png" 
-              alt="Piano"
-              style={{ width: '212px', height: '212px' }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/piano/title.png" 
-              alt="Piano Tiles"
-              style={{ width: '250px', height: 'auto' }}
-            />
+{!gameStarted && !gameOver && (
+  <div
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '30px',
+      zIndex: 10,
+    }}
+  >
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img 
+      src="https://up6.cc/2025/10/176142651326241.png" 
+      alt="Logo"
+      style={{ width: '212px', height: '212px' }}
+    />
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img 
+      src="/piano/title.png" 
+      alt="Piano Tiles"
+      style={{ width: '250px', height: 'auto' }}
+    />
+
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/piano/start.png" 
