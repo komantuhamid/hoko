@@ -101,7 +101,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       bgMusicRef.current.volume = 0.3;
 
       const bgImg = document.createElement('img');
-      bgImg.src = '/piano/bg.png';
+      bgImg.src = 'https://up6.cc/2025/10/176136465862651.jpg';
       bgImageRef.current = bgImg;
 
       const columnBgImg = document.createElement('img');
@@ -279,7 +279,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       addColumnHighlight(currentColumn, 'success');
       
     } else if (!clickedWhiteTile) {
-      // 🎯 Create red error tile at clicked position
       playBuzzer();
       
       const tileRow = Math.floor(clickY / TILE_HEIGHT);
@@ -440,7 +439,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
         } else if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.35)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         } else if (tile.clicked) {
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
@@ -594,7 +593,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundImage: 'url(/piano/bg.png)',
+            backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             display: 'flex',
