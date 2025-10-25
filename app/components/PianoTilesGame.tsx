@@ -43,10 +43,10 @@ interface ColumnHighlight {
   type: 'success' | 'error';
 }
 
-const CANVAS_WIDTH = 288;
-const CANVAS_HEIGHT = 512;
+const CANVAS_WIDTH = 424;
+const CANVAS_HEIGHT = 695;
 const TILE_WIDTH = CANVAS_WIDTH / 4;
-const TILE_HEIGHT = 128;
+const TILE_HEIGHT = 173;
 const FPS = 60;
 const CLICK_DELAY = 100;
 
