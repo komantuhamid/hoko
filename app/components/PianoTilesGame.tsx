@@ -88,9 +88,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const [currentMelodyKey, setCurrentMelodyKey] = useState(melodyKeys[Math.floor(Math.random() * melodyKeys.length)]);
   const currentMelody = MELODIES[currentMelodyKey as keyof typeof MELODIES];
 
-  // إضافة state جديد للتحكم في عرض Game Over
-  const [showGameOver, setShowGameOver] = useState(false);
-
   const getSpeed = (currentScore: number) => {
     return (30 + 1 * currentScore) * (FPS / 1000);
   };
@@ -279,7 +276,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       playBuzzer();
       addColumnHighlight(clickedColumn, 'error');
       setGameOver(true);
-      setShowGameOver(true); // إظهار شاشة Game Over
+      setOverlayIndex(0);
       consecutiveClicksRef.current = 0;
       lastClickedColumnRef.current = -1;
     }
@@ -391,7 +388,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             // Show RED in the TILE's column (the one that should've been clicked)
             addColumnHighlight(tile.column, 'error');
             setGameOver(true);
-            setShowGameOver(true);
+            setOverlayIndex(0);
             consecutiveClicksRef.current = 0;
             lastClickedColumnRef.current = -1;
             return { ...tile, y: newY, alive: false };
@@ -464,7 +461,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     
     setGameStarted(true);
     setGameOver(false);
-    setShowGameOver(false); // إخفاء شاشة Game Over
     setScore(0);
     setTiles([]);
     setFloatingTexts([]);
@@ -501,7 +497,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const resetGame = () => {
     setGameStarted(false);
     setGameOver(false);
-    setShowGameOver(false); // إخفاء شاشة Game Over
     setScore(0);
     setTiles([]);
     setFloatingTexts([]);
@@ -635,8 +630,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }}
       />
 
-      {/* شاشة Game Over المحسنة والبسيطة */}
-      {gameOver && showGameOver && (
+      {gameOver && overlayIndex > 20 && (
         <>
           <div
             style={{
@@ -645,145 +639,108 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(0, 0, 0, 0.7)',
+              backgroundImage: 'url(/piano/red-overlay.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.7,
               zIndex: 5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
           />
           
           <div
             style={{
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'white',
-              borderRadius: '15px',
-              padding: '20px',
-              width: '250px',
-              textAlign: 'center',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px',
               zIndex: 10,
             }}
           >
             <h2 style={{ 
-              fontSize: '28px', 
-              color: '#333', 
-              margin: '0 0 10px 0',
+              fontSize: '48px', 
+              color: 'white', 
+              margin: 0,
               fontWeight: 'bold',
+              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             }}>
               GAME OVER
             </h2>
             
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              margin: '15px 0',
-              padding: '0 10px',
+            <p style={{ 
+              fontSize: '24px', 
+              color: 'white', 
+              margin: 0,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
             }}>
-              <div>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: '#666', 
-                  margin: '0',
-                }}>
-                  Score
-                </p>
-                <p style={{ 
-                  fontSize: '20px', 
-                  color: '#333', 
-                  margin: '5px 0 0 0',
-                  fontWeight: 'bold',
-                }}>
-                  {score}
-                </p>
-              </div>
-              
-              <div>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: '#666', 
-                  margin: '0',
-                }}>
-                  Best
-                </p>
-                <p style={{ 
-                  fontSize: '20px', 
-                  color: '#333', 
-                  margin: '5px 0 0 0',
-                  fontWeight: 'bold',
-                }}>
-                  {highScore}
-                </p>
-              </div>
-            </div>
+              Score: {score}
+            </p>
             
             <div style={{ 
               display: 'flex', 
-              justifyContent: 'center',
-              gap: '15px',
+              gap: '20px',
               marginTop: '20px',
             }}>
               <button
                 onClick={resetGame}
                 style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#f0f0f0',
+                  width: '60px',
+                  height: '60px',
+                  background: 'rgba(255,255,255,0.9)',
                   border: 'none',
                   borderRadius: '50%',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  color: '#333',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                  color: '#000',
                 }}
-                title="Exit"
               >
-                <X size={24} />
+                <X size={32} />
               </button>
               
               <button
                 onClick={startGame}
                 style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#f0f0f0',
+                  width: '60px',
+                  height: '60px',
+                  background: 'rgba(255,255,255,0.9)',
                   border: 'none',
                   borderRadius: '50%',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  color: '#333',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                  color: '#000',
                 }}
-                title="Restart"
               >
-                <RotateCcw size={24} />
+                <RotateCcw size={32} />
               </button>
               
               <button
                 onClick={toggleSound}
                 style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#f0f0f0',
+                  width: '60px',
+                  height: '60px',
+                  background: 'rgba(255,255,255,0.9)',
                   border: 'none',
                   borderRadius: '50%',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  color: '#333',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                  color: '#000',
                 }}
-                title={bgMusicEnabled ? "Mute" : "Unmute"}
               >
-                {bgMusicEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
+                {bgMusicEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
               </button>
             </div>
           </div>
