@@ -655,11 +655,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       <div
         style={{
           position: 'relative',
-          width: '100%',
-          maxWidth: CANVAS_WIDTH,
-          height: '100%',
-          maxHeight: CANVAS_HEIGHT,
-          borderRadius: '0px',
+          width: '100vw',
+          height: '100vh',
           overflow: 'hidden',
         }}
       >
@@ -753,8 +750,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           style={{
             display: 'block',
             cursor: gameStarted && !gameOver && countdown <= 0 ? 'pointer' : 'default',
-            width: '100%',
-            height: '100%',
+            width: '100vw',
+            height: '100vh',
+            objectFit: 'fill',
           }}
         />
 
