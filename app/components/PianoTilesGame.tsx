@@ -43,10 +43,10 @@ interface ColumnHighlight {
   type: 'success' | 'error';
 }
 
-const CANVAS_WIDTH = 424;  
-const CANVAS_HEIGHT = 695; 
-const TILE_WIDTH = CANVAS_WIDTH / 4; 
-const TILE_HEIGHT = 173;   
+const CANVAS_WIDTH = 424;  // 🎯 Farcaster Frame Size!
+const CANVAS_HEIGHT = 695; // 🎯 Farcaster Frame Size!
+const TILE_WIDTH = CANVAS_WIDTH / 4; // 106px per column
+const TILE_HEIGHT = 173;   // Nice tall tiles!
 const FPS = 60;
 const CLICK_DELAY = 100;
 
@@ -284,23 +284,22 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     } else if (!clickedWhiteTile) {
       playBuzzer();
       
-      // 🎯 SIMPLIFIED LOGIC: Just mark closest tile as error, don't create new tile!
-      let foundTileToMark = false;
+      const tileRow = Math.floor(clickY / TILE_HEIGHT);
+      const errorTileY = tileRow * TILE_HEIGHT;
       
-      setTiles((prev) =>
-        prev.map((t) => {
-          // Find ANY tile in the clicked column that hasn't been clicked yet
-          if (
-            t.column === clickedColumn &&
-            !t.clicked &&
-            !foundTileToMark
-          ) {
-            foundTileToMark = true;
-            return { ...t, alive: false, isError: true };
-          }
-          return t;
-        })
-      );
+      const errorTile: Tile = {
+        id: nextTileId,
+        x: clickedColumn * TILE_WIDTH,
+        y: errorTileY,
+        column: clickedColumn,
+        alive: false,
+        clicked: false,
+        note: '',
+        isError: true,
+      };
+      
+      setTiles((prev) => [...prev, errorTile]);
+      setNextTileId((prev) => prev + 1);
       
       setGameOver(true);
       setOverlayIndex(0);
@@ -397,7 +396,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       // 5. Update tiles
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
-          if (!tile.alive && !tile.clicked && !tile.isError) return tile;
+          if (!tile.alive && !tile.clicked) return tile;
           
           const newY = tile.y + speed;
 
@@ -430,7 +429,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
-      // 6. Draw normal alive tiles first
+      // 6. Draw tiles
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
           ctx.save();
@@ -508,27 +507,18 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius - 5, 0, Math.PI * 2);
           ctx.stroke();
-        }
-      });
-
-      // 7. Draw clicked tiles (gray)
-      tiles.forEach((tile) => {
-        if (tile.clicked) {
+          
+        } else if (tile.isError) {
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.35)';
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+        } else if (tile.clicked) {
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
 
-      // 8. Draw error tiles LAST on top
-      tiles.forEach((tile) => {
-        if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'; 
-          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-        }
-      });
-
-      // 9. Draw column lines ON TOP
-      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; 
+      // 7. 🎯 DRAW COLUMN LINES ON TOP OF EVERYTHING!
+      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // Solid white!
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
         ctx.beginPath();
@@ -537,7 +527,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.stroke();
       }
 
-      // 10. Draw floating texts
+      // 8. Draw floating texts
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
@@ -548,7 +538,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 11. Draw score
+      // 9. Draw score
       ctx.fillStyle = 'white';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'left';
