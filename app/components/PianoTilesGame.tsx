@@ -43,10 +43,10 @@ interface ColumnHighlight {
   type: 'success' | 'error';
 }
 
-const CANVAS_WIDTH = 424;  // 🎯 Farcaster Frame Size!
-const CANVAS_HEIGHT = 695; // 🎯 Farcaster Frame Size!
-const TILE_WIDTH = CANVAS_WIDTH / 4; // 106px per column
-const TILE_HEIGHT = 173;   // Nice tall tiles!
+const CANVAS_WIDTH = 288;
+const CANVAS_HEIGHT = 512;
+const TILE_WIDTH = CANVAS_WIDTH / 4;
+const TILE_HEIGHT = 128;
 const FPS = 60;
 const CLICK_DELAY = 100;
 
@@ -219,11 +219,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = CANVAS_WIDTH / rect.width;
-    const scaleY = CANVAS_HEIGHT / rect.height;
-    
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
 
     const clickedColumn = Math.floor(clickX / TILE_WIDTH);
 
@@ -331,7 +328,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const gameLoop = () => {
       frameCount.current += 1;
 
-      // 1. Draw background
       if (bgImageRef.current && bgImageRef.current.complete) {
         ctx.drawImage(bgImageRef.current, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       } else {
@@ -339,7 +335,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
 
-      // 2. Update particles
       if (frameCount.current % 2 === 0) {
         const updatedParticles = particles.map((p) => {
           let newY = p.y + p.speed;
@@ -366,7 +361,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setColumnHighlights(updatedHighlights.filter((h) => h.opacity > 0));
       }
 
-      // 3. Draw particles
       particles.forEach((p) => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -385,7 +379,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 4. Draw column highlights
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'success') {
           ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
@@ -393,7 +386,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 5. Update tiles
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      for (let i = 1; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * TILE_WIDTH, 0);
+        ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
+        ctx.stroke();
+      }
+
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
           if (!tile.alive && !tile.clicked) return tile;
@@ -429,26 +430,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
-      // 6. Draw tiles
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
-          ctx.save();
-          
-          const borderRadius = 12;
-          ctx.beginPath();
-          ctx.moveTo(tile.x + borderRadius, tile.y);
-          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
-          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
-          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
-          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
-          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
-          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
-          ctx.lineTo(tile.x, tile.y + borderRadius);
-          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
-          ctx.closePath();
-          
-          ctx.clip();
-          
+          // 🎯 Draw the black tile with background image
           if (columnBgImageRef.current && columnBgImageRef.current.complete) {
             ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           } else {
@@ -456,52 +440,19 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
           
-          ctx.restore();
-          
-          ctx.save();
-          ctx.shadowColor = 'rgba(50, 184, 198, 0.8)';
-          ctx.shadowBlur = 20;
-          ctx.strokeStyle = 'rgba(50, 184, 198, 0.3)';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(tile.x + borderRadius, tile.y);
-          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
-          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
-          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
-          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
-          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
-          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
-          ctx.lineTo(tile.x, tile.y + borderRadius);
-          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
-          ctx.closePath();
-          ctx.stroke();
-          ctx.restore();
-          
-          ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(tile.x + borderRadius, tile.y);
-          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
-          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
-          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
-          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
-          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
-          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
-          ctx.lineTo(tile.x, tile.y + borderRadius);
-          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
-          ctx.closePath();
-          ctx.stroke();
-          
+          // 🎯 NEW: Draw circular ring/glow around the tile
           const centerX = tile.x + TILE_WIDTH / 2;
           const centerY = tile.y + TILE_HEIGHT / 2;
           const radius = Math.min(TILE_WIDTH, TILE_HEIGHT) * 0.35;
           
+          // Outer glow
           ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
           ctx.stroke();
           
+          // Inner glow (brighter)
           ctx.strokeStyle = 'rgba(50, 184, 198, 0.9)';
           ctx.lineWidth = 2;
           ctx.beginPath();
@@ -517,17 +468,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 7. 🎯 DRAW COLUMN LINES ON TOP OF EVERYTHING!
-      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // Solid white!
-      ctx.lineWidth = 2;
-      for (let i = 1; i < 4; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * TILE_WIDTH, 0);
-        ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
-        ctx.stroke();
-      }
-
-      // 8. Draw floating texts
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
@@ -538,12 +478,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 9. Draw score
       ctx.fillStyle = 'white';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'left';
       ctx.fillText(`Score : ${score}`, 10, 30);
-      ctx.fillText(`High : ${highScore}`, 230, 30);
+      ctx.fillText(`High : ${highScore}`, 160, 30);
 
       if (!gameOver) {
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -733,8 +672,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         style={{
           display: 'block',
           cursor: gameStarted && !gameOver && countdown <= 0 ? 'pointer' : 'default',
-          width: '100%',
-          height: '100%',
         }}
       />
 
