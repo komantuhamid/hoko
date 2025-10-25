@@ -183,7 +183,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     setFloatingTexts((prev) => [...prev, newText]);
   };
 
-  // 🎯 FIXED: Clear all highlights when error happens
   const addColumnHighlight = (column: number, type: 'success' | 'error' = 'success') => {
     const newHighlight: ColumnHighlight = {
       column,
@@ -193,11 +192,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     };
     
     setColumnHighlights((prev) => {
-      // If error, CLEAR everything and show only this one RED flash
       if (type === 'error') {
         return [newHighlight];
       }
-      // If success, add to existing
       return [...prev, newHighlight];
     });
   };
@@ -276,7 +273,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       
     } else if (!clickedWhiteTile) {
       playBuzzer();
-      addColumnHighlight(clickedColumn, 'error');  // RED flash - clears everything else
+      addColumnHighlight(clickedColumn, 'error');
       setGameOver(true);
       setOverlayIndex(0);
       consecutiveClicksRef.current = 0;
