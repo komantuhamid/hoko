@@ -15,7 +15,7 @@ interface Tile {
   alive: boolean;
   clicked: boolean;
   note: string;
-  isError?: boolean; // 🎯 NEW: Track if this tile caused error
+  isError?: boolean; // 🎯 Track if this tile caused error
 }
 
 interface FloatingText {
@@ -173,7 +173,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       alive: true,
       clicked: false,
       note: getNextNote(),
-      isError: false, // 🎯 Initialize as false
+      isError: false,
     };
     setTiles((prev) => [...prev, newTile]);
     setNextTileId((prev) => prev + 1);
@@ -193,14 +193,14 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const addColumnHighlight = (column: number, type: 'success' | 'error' = 'success') => {
     const newHighlight: ColumnHighlight = {
       column,
-      opacity: type === 'error' ? 0 : 0.15, // 🎯 Set error opacity to 0 (we handle it per-tile now)
+      opacity: type === 'error' ? 0 : 0.15,
       timestamp: Date.now(),
       type,
     };
     
     setColumnHighlights((prev) => {
       if (type === 'error') {
-        return [];  // 🎯 Don't add column highlight for errors
+        return [];
       }
       return [...prev, newHighlight];
     });
@@ -221,8 +221,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-
-    const clickedColumn = Math.floor(clickX / TILE_WIDTH);
 
     let clickedTile = null;
     let clickedWhiteTile = false;
