@@ -192,6 +192,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     };
     
     setColumnHighlights((prev) => {
+      // 🎯 If error, clear ALL previous highlights
       if (type === 'error') {
         return [newHighlight];
       }
@@ -355,15 +356,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      columnHighlights.forEach((highlight) => {
-        if (highlight.type === 'error') {
-          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
-        } else {
-          ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
-        }
-        ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
-      });
-
+      // 🎯 STEP 1: Draw grid lines FIRST
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -372,6 +365,16 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
         ctx.stroke();
       }
+
+      // 🎯 STEP 2: Draw column highlights SECOND (on top of grid lines)
+      columnHighlights.forEach((highlight) => {
+        if (highlight.type === 'error') {
+          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
+        } else {
+          ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
+        }
+        ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
+      });
 
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
