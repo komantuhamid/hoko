@@ -432,12 +432,33 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
+          // 🎯 Draw the black tile with background image
           if (columnBgImageRef.current && columnBgImageRef.current.complete) {
             ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           } else {
             ctx.fillStyle = '#000000';
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
+          
+          // 🎯 NEW: Draw circular ring/glow around the tile
+          const centerX = tile.x + TILE_WIDTH / 2;
+          const centerY = tile.y + TILE_HEIGHT / 2;
+          const radius = Math.min(TILE_WIDTH, TILE_HEIGHT) * 0.35;
+          
+          // Outer glow
+          ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Inner glow (brighter)
+          ctx.strokeStyle = 'rgba(50, 184, 198, 0.9)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius - 5, 0, Math.PI * 2);
+          ctx.stroke();
+          
         } else if (tile.isError) {
           ctx.fillStyle = 'rgba(255, 0, 0, 0.35)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
