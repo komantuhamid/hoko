@@ -43,10 +43,10 @@ interface ColumnHighlight {
   type: 'success' | 'error';
 }
 
-const CANVAS_WIDTH = 288;
-const CANVAS_HEIGHT = 512;
-const TILE_WIDTH = CANVAS_WIDTH / 4;
-const TILE_HEIGHT = 128;
+const CANVAS_WIDTH = 424;  
+const CANVAS_HEIGHT = 695; 
+const TILE_WIDTH = CANVAS_WIDTH / 4; 
+const TILE_HEIGHT = 173;   
 const FPS = 60;
 const CLICK_DELAY = 100;
 
@@ -219,8 +219,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const scaleX = CANVAS_WIDTH / rect.width;
+    const scaleY = CANVAS_HEIGHT / rect.height;
+    
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
 
     const clickedColumn = Math.floor(clickX / TILE_WIDTH);
 
@@ -281,22 +284,21 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     } else if (!clickedWhiteTile) {
       playBuzzer();
       
-      const tileRow = Math.floor(clickY / TILE_HEIGHT);
-      const errorTileY = tileRow * TILE_HEIGHT;
+      let foundTileToMark = false;
       
-      const errorTile: Tile = {
-        id: nextTileId,
-        x: clickedColumn * TILE_WIDTH,
-        y: errorTileY,
-        column: clickedColumn,
-        alive: false,
-        clicked: false,
-        note: '',
-        isError: true,
-      };
-      
-      setTiles((prev) => [...prev, errorTile]);
-      setNextTileId((prev) => prev + 1);
+      setTiles((prev) =>
+        prev.map((t) => {
+          if (
+            t.column === clickedColumn &&
+            !t.clicked &&
+            !foundTileToMark
+          ) {
+            foundTileToMark = true;
+            return { ...t, alive: false, isError: true };
+          }
+          return t;
+        })
+      );
       
       setGameOver(true);
       setOverlayIndex(0);
@@ -328,6 +330,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const gameLoop = () => {
       frameCount.current += 1;
 
+      // 1. Draw background
       if (bgImageRef.current && bgImageRef.current.complete) {
         ctx.drawImage(bgImageRef.current, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       } else {
@@ -335,6 +338,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
 
+      // 2. Update particles
       if (frameCount.current % 2 === 0) {
         const updatedParticles = particles.map((p) => {
           let newY = p.y + p.speed;
@@ -361,6 +365,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setColumnHighlights(updatedHighlights.filter((h) => h.opacity > 0));
       }
 
+      // 3. Draw particles
       particles.forEach((p) => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -379,6 +384,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 4. Draw column highlights
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'success') {
           ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
@@ -386,18 +392,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      for (let i = 1; i < 4; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * TILE_WIDTH, 0);
-        ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
-        ctx.stroke();
-      }
-
+      // 5. Update tiles
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
-          if (!tile.alive && !tile.clicked) return tile;
+          if (!tile.alive && !tile.clicked && !tile.isError) return tile;
           
           const newY = tile.y + speed;
 
@@ -430,9 +428,26 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
+      // 6. Draw normal alive tiles first
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
-          // 🎯 Draw the black tile with background image
+          ctx.save();
+          
+          const borderRadius = 12;
+          ctx.beginPath();
+          ctx.moveTo(tile.x + borderRadius, tile.y);
+          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
+          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
+          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
+          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.lineTo(tile.x, tile.y + borderRadius);
+          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
+          ctx.closePath();
+          
+          ctx.clip();
+          
           if (columnBgImageRef.current && columnBgImageRef.current.complete) {
             ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           } else {
@@ -440,34 +455,87 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
           
-          // 🎯 NEW: Draw circular ring/glow around the tile
+          ctx.restore();
+          
+          ctx.save();
+          ctx.shadowColor = 'rgba(50, 184, 198, 0.8)';
+          ctx.shadowBlur = 20;
+          ctx.strokeStyle = 'rgba(50, 184, 198, 0.3)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(tile.x + borderRadius, tile.y);
+          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
+          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
+          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
+          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.lineTo(tile.x, tile.y + borderRadius);
+          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+          
+          ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(tile.x + borderRadius, tile.y);
+          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
+          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
+          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
+          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.lineTo(tile.x, tile.y + borderRadius);
+          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
+          ctx.closePath();
+          ctx.stroke();
+          
           const centerX = tile.x + TILE_WIDTH / 2;
           const centerY = tile.y + TILE_HEIGHT / 2;
           const radius = Math.min(TILE_WIDTH, TILE_HEIGHT) * 0.35;
           
-          // Outer glow
           ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
           ctx.stroke();
           
-          // Inner glow (brighter)
           ctx.strokeStyle = 'rgba(50, 184, 198, 0.9)';
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius - 5, 0, Math.PI * 2);
           ctx.stroke();
-          
-        } else if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.35)';
-          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
-        } else if (tile.clicked) {
+        }
+      });
+
+      // 7. Draw clicked tiles (gray)
+      tiles.forEach((tile) => {
+        if (tile.clicked) {
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
 
+      // 8. Draw error tiles LAST on top
+      tiles.forEach((tile) => {
+        if (tile.isError) {
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'; 
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+        }
+      });
+
+      // 9. Draw column lines ON TOP
+      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; 
+      ctx.lineWidth = 2;
+      for (let i = 1; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * TILE_WIDTH, 0);
+        ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
+        ctx.stroke();
+      }
+
+      // 10. Draw floating texts
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
@@ -478,11 +546,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 11. Draw score
       ctx.fillStyle = 'white';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'left';
       ctx.fillText(`Score : ${score}`, 10, 30);
-      ctx.fillText(`High : ${highScore}`, 160, 30);
+      ctx.fillText(`High : ${highScore}`, 230, 30);
 
       if (!gameOver) {
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -573,110 +642,53 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   return (
     <div
       style={{
-        position: 'relative',
-        width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
-        margin: '0 auto',
-        borderRadius: '10px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#000',
       }}
     >
-      {gameStarted && !gameOver && countdown <= 0 && (
-        <button
-          onClick={toggleSound}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            zIndex: 20,
-            background: 'rgba(0,0,0,0.7)',
-            border: '2px solid #feca57',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#feca57',
-          }}
-        >
-          {bgMusicEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-        </button>
-      )}
-
-      {!gameStarted && !gameOver && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '30px',
-            zIndex: 10,
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src="/piano/piano.png" 
-            alt="Piano"
-            style={{ width: '212px', height: '212px' }}
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src="/piano/title.png" 
-            alt="Piano Tiles"
-            style={{ width: '250px', height: 'auto' }}
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src="/piano/start.png" 
-            alt="Start"
-            onClick={startGame}
-            style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
-          />
-        </div>
-      )}
-
-      {gameStarted && countdown > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: '80px',
-            color: 'white',
-            fontWeight: 'bold',
-            zIndex: 15,
-          }}
-        >
-          {countdown}
-        </div>
-      )}
-
-      <canvas
-        ref={canvasRef}
-        width={CANVAS_WIDTH}
-        height={CANVAS_HEIGHT}
-        onClick={handleCanvasClick}
+      <div
         style={{
-          display: 'block',
-          cursor: gameStarted && !gameOver && countdown <= 0 ? 'pointer' : 'default',
+          position: 'relative',
+          width: '100%',
+          maxWidth: CANVAS_WIDTH,
+          height: '100%',
+          maxHeight: CANVAS_HEIGHT,
+          borderRadius: '0px',
+          overflow: 'hidden',
         }}
-      />
+      >
+        {gameStarted && !gameOver && countdown <= 0 && (
+          <button
+            onClick={toggleSound}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              zIndex: 20,
+              background: 'rgba(0,0,0,0.7)',
+              border: '2px solid #feca57',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#feca57',
+            }}
+          >
+            {bgMusicEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+          </button>
+        )}
 
-      {gameOver && overlayIndex > 20 && (
-        <>
+        {!gameStarted && !gameOver && (
           <div
             style={{
               position: 'absolute',
@@ -684,113 +696,186 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundImage: 'url(/piano/red-overlay.png)',
+              backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: 0.7,
-              zIndex: 5,
-            }}
-          />
-          
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '20px',
+              gap: '30px',
               zIndex: 10,
             }}
           >
-            <h2 style={{ 
-              fontSize: '48px', 
-              color: 'white', 
-              margin: 0,
-              fontWeight: 'bold',
-              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-            }}>
-              GAME OVER
-            </h2>
-            
-            <p style={{ 
-              fontSize: '24px', 
-              color: 'white', 
-              margin: 0,
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-            }}>
-              Score: {score}
-            </p>
-            
-            <div style={{ 
-              display: 'flex', 
-              gap: '20px',
-              marginTop: '20px',
-            }}>
-              <button
-                onClick={resetGame}
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  background: 'rgba(255,255,255,0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                  color: '#000',
-                }}
-              >
-                <X size={32} />
-              </button>
-              
-              <button
-                onClick={startGame}
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  background: 'rgba(255,255,255,0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                  color: '#000',
-                }}
-              >
-                <RotateCcw size={32} />
-              </button>
-              
-              <button
-                onClick={toggleSound}
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  background: 'rgba(255,255,255,0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                  color: '#000',
-                }}
-              >
-                {bgMusicEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
-              </button>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/piano/piano.png" 
+              alt="Piano"
+              style={{ width: '212px', height: '212px' }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/piano/title.png" 
+              alt="Piano Tiles"
+              style={{ width: '250px', height: 'auto' }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/piano/start.png" 
+              alt="Start"
+              onClick={startGame}
+              style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
+            />
           </div>
-        </>
-      )}
+        )}
+
+        {gameStarted && countdown > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              fontSize: '80px',
+              color: 'white',
+              fontWeight: 'bold',
+              zIndex: 15,
+            }}
+          >
+            {countdown}
+          </div>
+        )}
+
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_WIDTH}
+          height={CANVAS_HEIGHT}
+          onClick={handleCanvasClick}
+          style={{
+            display: 'block',
+            cursor: gameStarted && !gameOver && countdown <= 0 ? 'pointer' : 'default',
+            width: '100%',
+            height: '100%',
+          }}
+        />
+
+        {gameOver && overlayIndex > 20 && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: 'url(/piano/red-overlay.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: 0.7,
+                zIndex: 5,
+              }}
+            />
+            
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '20px',
+                zIndex: 10,
+              }}
+            >
+              <h2 style={{ 
+                fontSize: '48px', 
+                color: 'white', 
+                margin: 0,
+                fontWeight: 'bold',
+                textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+              }}>
+                GAME OVER
+              </h2>
+              
+              <p style={{ 
+                fontSize: '24px', 
+                color: 'white', 
+                margin: 0,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+              }}>
+                Score: {score}
+              </p>
+              
+              <div style={{ 
+                display: 'flex', 
+                gap: '20px',
+                marginTop: '20px',
+              }}>
+                <button
+                  onClick={resetGame}
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    background: 'rgba(255,255,255,0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                    color: '#000',
+                  }}
+                >
+                  <X size={32} />
+                </button>
+                
+                <button
+                  onClick={startGame}
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    background: 'rgba(255,255,255,0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                    color: '#000',
+                  }}
+                >
+                  <RotateCcw size={32} />
+                </button>
+                
+                <button
+                  onClick={toggleSound}
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    background: 'rgba(255,255,255,0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                    color: '#000',
+                  }}
+                >
+                  {bgMusicEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
