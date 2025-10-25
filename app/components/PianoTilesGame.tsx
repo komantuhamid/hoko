@@ -15,6 +15,7 @@ interface Tile {
   alive: boolean;
   clicked: boolean;
   note: string;
+  isError?: boolean; // 🎯 NEW: Track if this tile caused error
 }
 
 interface FloatingText {
@@ -172,6 +173,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       alive: true,
       clicked: false,
       note: getNextNote(),
+      isError: false, // 🎯 Initialize as false
     };
     setTiles((prev) => [...prev, newTile]);
     setNextTileId((prev) => prev + 1);
@@ -191,14 +193,14 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const addColumnHighlight = (column: number, type: 'success' | 'error' = 'success') => {
     const newHighlight: ColumnHighlight = {
       column,
-      opacity: type === 'error' ? 0.5 : 0.15,
+      opacity: type === 'error' ? 0 : 0.15, // 🎯 Set error opacity to 0 (we handle it per-tile now)
       timestamp: Date.now(),
       type,
     };
     
     setColumnHighlights((prev) => {
       if (type === 'error') {
-        return [newHighlight];
+        return [];  // 🎯 Don't add column highlight for errors
       }
       return [...prev, newHighlight];
     });
@@ -278,7 +280,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       
     } else if (!clickedWhiteTile) {
       playBuzzer();
-      addColumnHighlight(clickedColumn, 'error');
       setGameOver(true);
       setOverlayIndex(0);
       consecutiveClicksRef.current = 0;
@@ -360,18 +361,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 🎯 STEP 1: Draw column highlights FIRST (behind grid lines)
+      // 🎯 Draw success column highlights (white flash)
       columnHighlights.forEach((highlight) => {
-        if (highlight.type === 'error') {
-          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
-        } else {
+        if (highlight.type === 'success') {
           ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
+          ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
         }
-        // 🎯 KEY FIX: Only fill ONE column width!
-        ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
       });
 
-      // 🎯 STEP 2: Draw grid lines SECOND (on top of highlights)
+      // Draw grid lines
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -387,14 +385,14 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           
           const newY = tile.y + speed;
 
+          // 🎯 Check if tile reached bottom (missed)
           if (newY + TILE_HEIGHT >= CANVAS_HEIGHT && tile.alive) {
             playBuzzer();
-            addColumnHighlight(tile.column, 'error');
             setGameOver(true);
             setOverlayIndex(0);
             consecutiveClicksRef.current = 0;
             lastClickedColumnRef.current = -1;
-            return { ...tile, y: newY, alive: false };
+            return { ...tile, y: newY, alive: false, isError: true }; // 🎯 Mark as error tile
           }
 
           return { ...tile, y: newY };
@@ -417,15 +415,22 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
+      // 🎯 Draw tiles with red highlighting ONLY for error tiles
       tiles.forEach((tile) => {
-        if (tile.alive && !tile.clicked) {
+        if (tile.alive && !tile.clicked && !tile.isError) {
+          // Normal alive tiles - draw with blue glow background
           if (columnBgImageRef.current && columnBgImageRef.current.complete) {
             ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           } else {
             ctx.fillStyle = '#000000';
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
+        } else if (tile.isError) {
+          // 🎯 ERROR TILE - Draw with RED background
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         } else if (tile.clicked) {
+          // Clicked tiles - semi-transparent gray
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
@@ -494,6 +499,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         alive: true,
         clicked: false,
         note: firstNote,
+        isError: false,
       };
       setTiles([firstTile]);
       setNextTileId(1);
