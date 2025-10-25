@@ -78,6 +78,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const columnBgImageRef = useRef<HTMLImageElement | null>(null);
   const particleIdRef = useRef(0);
   const lastClickTimeRef = useRef<number>(0);
+  const audioPoolRef = useRef<Map<string, HTMLAudioElement[]>>(new Map());
   
   const lastClickedColumnRef = useRef<number>(-1);
   const consecutiveClicksRef = useRef<number>(0);
@@ -143,13 +144,31 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     }
   }, [gameStarted, gameOver]);
 
-  const playSound = (note: string, tileY: number) => {
+  const playSound = useCallback((note: string, tileY: number) => {
     const normalizedY = Math.max(0, Math.min(1, tileY / CANVAS_HEIGHT));
     const volume = 0.3 + (normalizedY * 0.7);
-    const audio = new Audio(`/piano/sounds/${note}.ogg`);
+    
+    // Get or create audio pool for this note
+    if (!audioPoolRef.current.has(note)) {
+      audioPoolRef.current.set(note, []);
+    }
+    
+    const pool = audioPoolRef.current.get(note)!;
+    
+    // Find available audio or create new one
+    let audio = pool.find(a => a.paused || a.ended);
+    
+    if (!audio) {
+      audio = new Audio(`/piano/sounds/${note}.ogg`);
+      pool.push(audio);
+    }
+    
+    // Stop and reset if still playing
+    audio.pause();
+    audio.currentTime = 0;
     audio.volume = volume * 0.6;
     audio.play().catch(() => {});
-  };
+  }, []);
 
   const playBuzzer = useCallback(() => {
     const audio = new Audio('/piano/sounds/piano-buzzer.mp3');
@@ -288,7 +307,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       const errorTile: Tile = {
         id: nextTileId,
         x: clickedColumn * TILE_WIDTH,
-        y: clickY - (TILE_HEIGHT / 2), // Center at click Y position
+        y: clickY - (TILE_HEIGHT / 2),
         column: clickedColumn,
         alive: false,
         clicked: false,
@@ -519,7 +538,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       // 8. Draw error tiles LAST on top - TRANSPARENT CHFAF
       tiles.forEach((tile) => {
         if (tile.isError) {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';  // 0.5 = CHFAF transparent!
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
       });
@@ -545,12 +564,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 11. Draw score
+      // 11. Draw score - CENTERED
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 24px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText(`Score : ${score}`, 10, 30);
-      ctx.fillText(`High : ${highScore}`, 230, 30);
+      ctx.font = 'bold 28px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${score}`, CANVAS_WIDTH / 2, 35);
 
       if (!gameOver) {
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -564,7 +582,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [tiles, floatingTexts, particles, columnHighlights, gameOver, score, highScore, spawnTile, countdown, gameStarted, playBuzzer]);
+  }, [tiles, floatingTexts, particles, columnHighlights, gameOver, score, highScore, spawnTile, countdown, gameStarted, playBuzzer, playSound]);
 
   const startGame = () => {
     const randomKey = melodyKeys[Math.floor(Math.random() * melodyKeys.length)];
