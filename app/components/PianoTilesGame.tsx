@@ -432,7 +432,27 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
 
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
-          // 🎯 Draw the black tile with background image
+          // 🎯 SAVE CONTEXT for clipping
+          ctx.save();
+          
+          // 🎯 Create rounded rectangle path
+          const borderRadius = 12; // Subtle rounded corners
+          ctx.beginPath();
+          ctx.moveTo(tile.x + borderRadius, tile.y);
+          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
+          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
+          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
+          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.lineTo(tile.x, tile.y + borderRadius);
+          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
+          ctx.closePath();
+          
+          // 🎯 Clip to rounded rectangle
+          ctx.clip();
+          
+          // 🎯 Draw the tile background image with clipping
           if (columnBgImageRef.current && columnBgImageRef.current.complete) {
             ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           } else {
@@ -440,19 +460,56 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
           
-          // 🎯 NEW: Draw circular ring/glow around the tile
+          // 🎯 Restore context (remove clip)
+          ctx.restore();
+          
+          // 🎯 OUTER GLOW - Large blur effect
+          ctx.save();
+          ctx.shadowColor = 'rgba(50, 184, 198, 0.8)';
+          ctx.shadowBlur = 20;
+          ctx.strokeStyle = 'rgba(50, 184, 198, 0.3)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(tile.x + borderRadius, tile.y);
+          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
+          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
+          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
+          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.lineTo(tile.x, tile.y + borderRadius);
+          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+          
+          // 🎯 INNER BORDER - Brighter cyan edge
+          ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(tile.x + borderRadius, tile.y);
+          ctx.lineTo(tile.x + TILE_WIDTH - borderRadius, tile.y);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y, tile.x + TILE_WIDTH, tile.y + borderRadius);
+          ctx.lineTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.quadraticCurveTo(tile.x + TILE_WIDTH, tile.y + TILE_HEIGHT, tile.x + TILE_WIDTH - borderRadius, tile.y + TILE_HEIGHT);
+          ctx.lineTo(tile.x + borderRadius, tile.y + TILE_HEIGHT);
+          ctx.quadraticCurveTo(tile.x, tile.y + TILE_HEIGHT, tile.x, tile.y + TILE_HEIGHT - borderRadius);
+          ctx.lineTo(tile.x, tile.y + borderRadius);
+          ctx.quadraticCurveTo(tile.x, tile.y, tile.x + borderRadius, tile.y);
+          ctx.closePath();
+          ctx.stroke();
+          
+          // 🎯 CIRCULAR GLOW in center (keep this!)
           const centerX = tile.x + TILE_WIDTH / 2;
           const centerY = tile.y + TILE_HEIGHT / 2;
           const radius = Math.min(TILE_WIDTH, TILE_HEIGHT) * 0.35;
           
-          // Outer glow
           ctx.strokeStyle = 'rgba(50, 184, 198, 0.6)';
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
           ctx.stroke();
           
-          // Inner glow (brighter)
           ctx.strokeStyle = 'rgba(50, 184, 198, 0.9)';
           ctx.lineWidth = 2;
           ctx.beginPath();
