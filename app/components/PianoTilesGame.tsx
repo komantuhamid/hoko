@@ -102,7 +102,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       bgMusicRef.current.volume = 0.3;
 
       const bgImg = document.createElement('img');
-      bgImg.src = 'https://up6.cc/2025/10/176142923324271.png';
+      bgImg.src = 'https://up6.cc/2025/10/17614298485651.png';
       bgImageRef.current = bgImg;
 
       const columnBgImg = document.createElement('img');
@@ -701,7 +701,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundImage: 'url(https://up6.cc/2025/10/176142946172751.png)',
+                backgroundImage: 'url(https://up6.cc/2025/10/176142998442141.png)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 display: 'flex',
