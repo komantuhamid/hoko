@@ -729,13 +729,35 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 alt="Piano Tiles"
                 style={{ width: '250px', height: 'auto' }}
               />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="/piano/start.png" 
-                alt="Start"
+              
+              <button
                 onClick={startGame}
-                style={{ width: '150px', height: 'auto', cursor: 'pointer', marginTop: '20px' }}
-              />
+                style={{
+                  width: '280px',
+                  height: '90px',
+                  background: 'linear-gradient(135deg, #4FC3DC 0%, #2E9FBC 100%)',
+                  border: '5px solid white',
+                  borderRadius: '50px',
+                  cursor: 'pointer',
+                  fontSize: '42px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
+                  marginTop: '20px',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)';
+                }}
+              >
+                PLAY
+              </button>
             </div>
           </>
         )}
