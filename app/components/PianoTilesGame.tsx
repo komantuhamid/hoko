@@ -103,7 +103,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       bgImg.src = '/piano/bg.png';
       bgImageRef.current = bgImg;
 
-      // 🎯 Load the column background image
       const columnBgImg = document.createElement('img');
       columnBgImg.src = 'https://up6.cc/2025/10/176136230102071.png';
       columnBgImageRef.current = columnBgImg;
@@ -361,6 +360,18 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 🎯 STEP 1: Draw column highlights FIRST (behind grid lines)
+      columnHighlights.forEach((highlight) => {
+        if (highlight.type === 'error') {
+          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
+        } else {
+          ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
+        }
+        // 🎯 KEY FIX: Only fill ONE column width!
+        ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
+      });
+
+      // 🎯 STEP 2: Draw grid lines SECOND (on top of highlights)
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -369,15 +380,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
         ctx.stroke();
       }
-
-      columnHighlights.forEach((highlight) => {
-        if (highlight.type === 'error') {
-          ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
-        } else {
-          ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
-        }
-        ctx.fillRect(highlight.column * TILE_WIDTH, 0, TILE_WIDTH, CANVAS_HEIGHT);
-      });
 
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
@@ -415,19 +417,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
-      // 🎯 Draw tiles with beautiful background
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked) {
-          // Draw the beautiful blue glowing background
           if (columnBgImageRef.current && columnBgImageRef.current.complete) {
             ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           } else {
-            // Fallback to black if image not loaded
             ctx.fillStyle = '#000000';
             ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
           }
         } else if (tile.clicked) {
-          // Clicked tiles remain semi-transparent
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
