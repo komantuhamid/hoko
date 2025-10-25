@@ -74,6 +74,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
   const frameCount = useRef(0);
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
+  const columnBgImageRef = useRef<HTMLImageElement | null>(null);
   const particleIdRef = useRef(0);
   const lastClickTimeRef = useRef<number>(0);
   
@@ -101,6 +102,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       const bgImg = document.createElement('img');
       bgImg.src = '/piano/bg.png';
       bgImageRef.current = bgImg;
+
+      // 🎯 Load the column background image
+      const columnBgImg = document.createElement('img');
+      columnBgImg.src = 'https://up6.cc/2025/10/176136230102071.png';
+      columnBgImageRef.current = columnBgImg;
     }
     
     return () => {
@@ -272,7 +278,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
       addColumnHighlight(currentColumn, 'success');
       
     } else if (!clickedWhiteTile) {
-      // 🎯 WRONG CLICK - Show red on clicked column
       playBuzzer();
       addColumnHighlight(clickedColumn, 'error');
       setGameOver(true);
@@ -356,7 +361,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
-      // 🎯 Draw grid lines FIRST
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       for (let i = 1; i < 4; i++) {
@@ -366,7 +370,6 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.stroke();
       }
 
-      // 🎯 Draw column highlights SECOND (on top)
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'error') {
           ctx.fillStyle = `rgba(255, 0, 0, ${highlight.opacity})`;
@@ -382,10 +385,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
           
           const newY = tile.y + speed;
 
-          // 🎯 KEY FIX: Tile reached bottom WITHOUT being clicked
           if (newY + TILE_HEIGHT >= CANVAS_HEIGHT && tile.alive) {
             playBuzzer();
-            // Show RED in the TILE's column (the one that should've been clicked)
             addColumnHighlight(tile.column, 'error');
             setGameOver(true);
             setOverlayIndex(0);
@@ -414,11 +415,19 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
+      // 🎯 Draw tiles with beautiful background
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked) {
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+          // Draw the beautiful blue glowing background
+          if (columnBgImageRef.current && columnBgImageRef.current.complete) {
+            ctx.drawImage(columnBgImageRef.current, tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+          } else {
+            // Fallback to black if image not loaded
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
+          }
         } else if (tile.clicked) {
+          // Clicked tiles remain semi-transparent
           ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
           ctx.fillRect(tile.x, tile.y, TILE_WIDTH, TILE_HEIGHT);
         }
