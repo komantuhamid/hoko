@@ -701,7 +701,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundImage: 'url(https://up6.cc/2025/10/176142878284261.png)',
+                backgroundImage: 'url(https://up6.cc/2025/10/176142946172751.png)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 display: 'flex',
