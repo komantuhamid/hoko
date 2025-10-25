@@ -219,8 +219,11 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const scaleX = CANVAS_WIDTH / rect.width;
+    const scaleY = CANVAS_HEIGHT / rect.height;
+    
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
 
     const clickedColumn = Math.floor(clickX / TILE_WIDTH);
 
@@ -328,6 +331,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     const gameLoop = () => {
       frameCount.current += 1;
 
+      // 1. Draw background
       if (bgImageRef.current && bgImageRef.current.complete) {
         ctx.drawImage(bgImageRef.current, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       } else {
@@ -335,6 +339,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
 
+      // 2. Update particles
       if (frameCount.current % 2 === 0) {
         const updatedParticles = particles.map((p) => {
           let newY = p.y + p.speed;
@@ -361,6 +366,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setColumnHighlights(updatedHighlights.filter((h) => h.opacity > 0));
       }
 
+      // 3. Draw particles
       particles.forEach((p) => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -379,6 +385,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 4. Draw column highlights
       columnHighlights.forEach((highlight) => {
         if (highlight.type === 'success') {
           ctx.fillStyle = `rgba(255, 255, 255, ${highlight.opacity})`;
@@ -386,16 +393,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
-      // 🎯 DRAW THE WHITE COLUMN LINES!
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; // Bright white lines!
-      ctx.lineWidth = 2;
-      for (let i = 1; i < 4; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * TILE_WIDTH, 0);
-        ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
-        ctx.stroke();
-      }
-
+      // 5. Update tiles
       if (!gameOver) {
         const updatedTiles = tiles.map((tile) => {
           if (!tile.alive && !tile.clicked) return tile;
@@ -431,6 +429,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         setFloatingTexts(updatedTexts.filter((t) => t.opacity > 0));
       }
 
+      // 6. Draw tiles
       tiles.forEach((tile) => {
         if (tile.alive && !tile.clicked && !tile.isError) {
           ctx.save();
@@ -518,6 +517,17 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         }
       });
 
+      // 7. 🎯 DRAW COLUMN LINES ON TOP OF EVERYTHING!
+      ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // Solid white!
+      ctx.lineWidth = 2;
+      for (let i = 1; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * TILE_WIDTH, 0);
+        ctx.lineTo(i * TILE_WIDTH, CANVAS_HEIGHT);
+        ctx.stroke();
+      }
+
+      // 8. Draw floating texts
       floatingTexts.forEach((text) => {
         ctx.save();
         ctx.globalAlpha = text.opacity;
@@ -528,11 +538,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         ctx.restore();
       });
 
+      // 9. Draw score
       ctx.fillStyle = 'white';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'left';
       ctx.fillText(`Score : ${score}`, 10, 30);
-      ctx.fillText(`High : ${highScore}`, 210, 30);
+      ctx.fillText(`High : ${highScore}`, 230, 30);
 
       if (!gameOver) {
         animationRef.current = requestAnimationFrame(gameLoop);
@@ -722,6 +733,8 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         style={{
           display: 'block',
           cursor: gameStarted && !gameOver && countdown <= 0 ? 'pointer' : 'default',
+          width: '100%',
+          height: '100%',
         }}
       />
 
