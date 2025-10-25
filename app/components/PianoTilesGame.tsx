@@ -284,45 +284,23 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
     } else if (!clickedWhiteTile) {
       playBuzzer();
       
-      // 🎯 NEW LOGIC: Find and mark existing tile as error INSTEAD of creating new one!
-      let foundNormalTile = false;
+      // 🎯 SIMPLIFIED LOGIC: Just mark closest tile as error, don't create new tile!
+      let foundTileToMark = false;
       
       setTiles((prev) =>
         prev.map((t) => {
-          // Check if this tile is in the clicked column and overlaps with click
+          // Find ANY tile in the clicked column that hasn't been clicked yet
           if (
             t.column === clickedColumn &&
-            clickY >= t.y &&
-            clickY <= t.y + TILE_HEIGHT &&
-            t.alive &&
-            !t.clicked
+            !t.clicked &&
+            !foundTileToMark
           ) {
-            foundNormalTile = true;
+            foundTileToMark = true;
             return { ...t, alive: false, isError: true };
           }
           return t;
         })
       );
-      
-      // Only create NEW error tile if no normal tile was found
-      if (!foundNormalTile) {
-        const tileRow = Math.floor(clickY / TILE_HEIGHT);
-        const errorTileY = tileRow * TILE_HEIGHT;
-        
-        const errorTile: Tile = {
-          id: nextTileId,
-          x: clickedColumn * TILE_WIDTH,
-          y: errorTileY,
-          column: clickedColumn,
-          alive: false,
-          clicked: false,
-          note: '',
-          isError: true,
-        };
-        
-        setTiles((prev) => [...prev, errorTile]);
-        setNextTileId((prev) => prev + 1);
-      }
       
       setGameOver(true);
       setOverlayIndex(0);
