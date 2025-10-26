@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { X, RotateCcw, Volume2, VolumeX, Play, Settings, Star } from 'lucide-react';
+import { X, RotateCcw, Volume2, VolumeX, Settings, Star } from 'lucide-react';
 
 interface PianoTilesGameProps {
   onGameOver?: (score: number) => void;
@@ -709,22 +709,24 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 }
               }
 
-              @keyframes buttonGlow {
+              @keyframes discSpin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+
+              @keyframes discGlow {
                 0%, 100% {
                   box-shadow: 
                     0 0 20px rgba(79, 195, 220, 0.6),
-                    0 0 40px rgba(79, 195, 220, 0.4);
+                    0 0 40px rgba(79, 195, 220, 0.4),
+                    0 0 60px rgba(79, 195, 220, 0.2);
                 }
                 50% {
                   box-shadow: 
                     0 0 30px rgba(79, 195, 220, 0.8),
-                    0 0 50px rgba(79, 195, 220, 0.6);
+                    0 0 50px rgba(79, 195, 220, 0.6),
+                    0 0 70px rgba(79, 195, 220, 0.4);
                 }
-              }
-
-              @keyframes iconPulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.1); }
               }
             `}</style>
             <div
@@ -781,39 +783,40 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 </h2>
               </div>
 
-              {/* Bouton PLAY central avec icône */}
+              {/* CD Disc comme bouton PLAY avec rotation */}
               <button
                 onClick={startGame}
                 style={{
-                  width: '120px',
-                  height: '120px',
-                  background: 'rgba(79, 195, 220, 0.9)',
+                  width: '200px',
+                  height: '200px',
+                  background: 'transparent',
                   border: 'none',
                   borderRadius: '50%',
                   cursor: 'pointer',
+                  animation: 'discSpin 8s linear infinite, discGlow 3s ease-in-out infinite',
+                  transition: 'all 0.3s ease',
+                  padding: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  animation: 'buttonGlow 2s ease-in-out infinite, float 4s ease-in-out infinite',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(79, 195, 220, 1)';
                   e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.animation = 'discSpin 4s linear infinite, discGlow 1.5s ease-in-out infinite';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(79, 195, 220, 0.9)';
                   e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.animation = 'discSpin 8s linear infinite, discGlow 3s ease-in-out infinite';
                 }}
               >
-                <Play 
-                  size={50} 
-                  color="#FFFFFF" 
-                  fill="#FFFFFF"
+                <img 
+                  src="https://up6.cc/2025/10/176144025144521.png" 
+                  alt="Play"
                   style={{
-                    marginLeft: '5px',
-                    animation: 'iconPulse 2s ease-in-out infinite',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
                   }}
                 />
               </button>
