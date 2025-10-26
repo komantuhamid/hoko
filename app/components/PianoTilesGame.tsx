@@ -717,15 +717,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
               @keyframes discGlow {
                 0%, 100% {
                   box-shadow: 
-                    0 0 20px rgba(79, 195, 220, 0.6),
-                    0 0 40px rgba(79, 195, 220, 0.4),
-                    0 0 60px rgba(79, 195, 220, 0.2);
+                    0 0 30px rgba(79, 195, 220, 0.7),
+                    0 0 50px rgba(79, 195, 220, 0.5),
+                    0 0 70px rgba(79, 195, 220, 0.3);
                 }
                 50% {
                   box-shadow: 
-                    0 0 30px rgba(79, 195, 220, 0.8),
-                    0 0 50px rgba(79, 195, 220, 0.6),
-                    0 0 70px rgba(79, 195, 220, 0.4);
+                    0 0 40px rgba(79, 195, 220, 0.9),
+                    0 0 60px rgba(79, 195, 220, 0.7),
+                    0 0 80px rgba(79, 195, 220, 0.5);
                 }
               }
             `}</style>
@@ -744,7 +744,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 zIndex: 10,
-                padding: '80px 0 60px 0',
+                padding: '60px 0 60px 0',
               }}
             >
               {/* Titre DREAMY MELODIES */}
@@ -752,7 +752,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                marginTop: '40px',
+                marginTop: '20px',
               }}>
                 <h1 style={{
                   fontSize: '64px',
@@ -783,12 +783,12 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 </h2>
               </div>
 
-              {/* CD Disc comme bouton PLAY avec rotation */}
+              {/* CD Disc agrandi comme bouton PLAY avec rotation */}
               <button
                 onClick={startGame}
                 style={{
-                  width: '200px',
-                  height: '200px',
+                  width: '280px',
+                  height: '280px',
                   background: 'transparent',
                   border: 'none',
                   borderRadius: '50%',
@@ -799,9 +799,10 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  filter: 'drop-shadow(0 0 20px rgba(79, 195, 220, 0.8))',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.transform = 'scale(1.05)';
                   e.currentTarget.style.animation = 'discSpin 4s linear infinite, discGlow 1.5s ease-in-out infinite';
                 }}
                 onMouseLeave={(e) => {
