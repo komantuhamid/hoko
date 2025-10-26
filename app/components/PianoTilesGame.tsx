@@ -728,6 +728,19 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                     0 0 80px rgba(79, 195, 220, 0.5);
                 }
               }
+
+              @keyframes buttonGlow {
+                0%, 100% {
+                  box-shadow: 
+                    0 0 15px rgba(79, 195, 220, 0.6),
+                    0 0 30px rgba(79, 195, 220, 0.4);
+                }
+                50% {
+                  box-shadow: 
+                    0 0 25px rgba(79, 195, 220, 0.8),
+                    0 0 40px rgba(79, 195, 220, 0.6);
+                }
+              }
             `}</style>
             <div
               style={{
@@ -744,7 +757,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 zIndex: 10,
-                padding: '60px 0 60px 0',
+                padding: '40px 0 60px 0',
               }}
             >
               {/* Titre DREAMY MELODIES */}
@@ -783,44 +796,65 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 </h2>
               </div>
 
-              {/* CD Disc agrandi comme bouton PLAY avec rotation */}
-              <button
-                onClick={startGame}
-                style={{
-                  width: '280px',
-                  height: '280px',
-                  background: 'transparent',
-                  border: 'none',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  animation: 'discSpin 8s linear infinite, discGlow 3s ease-in-out infinite',
-                  transition: 'all 0.3s ease',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  filter: 'drop-shadow(0 0 20px rgba(79, 195, 220, 0.8))',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.animation = 'discSpin 4s linear infinite, discGlow 1.5s ease-in-out infinite';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.animation = 'discSpin 8s linear infinite, discGlow 3s ease-in-out infinite';
-                }}
-              >
-                <img 
-                  src="https://up6.cc/2025/10/176144025144521.png" 
-                  alt="Play"
+              {/* Section centrale avec CD disc et bouton PLAY */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '20px',
+              }}>
+                {/* CD Disc avec rotation */}
+                <div
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
+                    width: '240px',
+                    height: '240px',
+                    animation: 'discSpin 8s linear infinite, discGlow 3s ease-in-out infinite',
+                    filter: 'drop-shadow(0 0 20px rgba(79, 195, 220, 0.8))',
                   }}
-                />
-              </button>
+                >
+                  <img 
+                    src="https://up6.cc/2025/10/176144025144521.png" 
+                    alt="CD Disc"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </div>
+
+                {/* Bouton PLAY sous le CD disc */}
+                <button
+                  onClick={startGame}
+                  style={{
+                    width: '180px',
+                    height: '60px',
+                    background: 'rgba(79, 195, 220, 0.9)',
+                    border: '2px solid rgba(255, 255, 255, 0.8)',
+                    borderRadius: '30px',
+                    cursor: 'pointer',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#FFFFFF',
+                    textTransform: 'uppercase',
+                    letterSpacing: '2px',
+                    animation: 'buttonGlow 2s ease-in-out infinite, float 4s ease-in-out infinite',
+                    transition: 'all 0.3s ease',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(79, 195, 220, 1)';
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(79, 195, 220, 0.9)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >
+                  PLAY
+                </button>
+              </div>
 
               {/* Boutons en bas avec icônes */}
               <div style={{
