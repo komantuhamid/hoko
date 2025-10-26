@@ -689,40 +689,36 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
         {!gameStarted && !gameOver && (
           <>
             <style>{`
-              @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
+              @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
               }
               
-              @keyframes glow {
+              @keyframes textGlow {
                 0%, 100% {
                   text-shadow: 
-                    0 0 10px rgba(79, 195, 220, 0.8),
-                    0 0 20px rgba(79, 195, 220, 0.6),
-                    0 0 30px rgba(79, 195, 220, 0.4),
-                    0 0 40px rgba(79, 195, 220, 0.2);
+                    0 0 20px rgba(255, 255, 255, 0.8),
+                    0 0 30px rgba(255, 255, 255, 0.6),
+                    0 0 40px rgba(255, 255, 255, 0.4);
                 }
                 50% {
                   text-shadow: 
-                    0 0 20px rgba(79, 195, 220, 1),
-                    0 0 30px rgba(79, 195, 220, 0.8),
-                    0 0 40px rgba(79, 195, 220, 0.6),
-                    0 0 50px rgba(79, 195, 220, 0.4);
+                    0 0 25px rgba(255, 255, 255, 1),
+                    0 0 35px rgba(255, 255, 255, 0.8),
+                    0 0 45px rgba(255, 255, 255, 0.6);
                 }
               }
-              
+
               @keyframes buttonGlow {
                 0%, 100% {
                   box-shadow: 
-                    0 0 15px rgba(79, 195, 220, 0.6),
-                    0 0 30px rgba(79, 195, 220, 0.4),
-                    0 8px 20px rgba(0,0,0,0.3);
+                    0 0 15px rgba(255, 255, 255, 0.4),
+                    0 0 25px rgba(255, 255, 255, 0.2);
                 }
                 50% {
                   box-shadow: 
-                    0 0 25px rgba(79, 195, 220, 0.8),
-                    0 0 40px rgba(79, 195, 220, 0.6),
-                    0 8px 20px rgba(0,0,0,0.3);
+                    0 0 25px rgba(255, 255, 255, 0.6),
+                    0 0 35px rgba(255, 255, 255, 0.4);
                 }
               }
             `}</style>
@@ -733,139 +729,136 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundImage: 'url(https://up6.cc/2025/10/176136465862651.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '30px',
+                gap: '10px',
                 zIndex: 10,
               }}
             >
-              {/* DREAMY MELODIES Title */}
+              {/* Titre DREAMY */}
               <h1 style={{
-                fontSize: '52px',
+                fontSize: '64px',
                 fontWeight: 'bold',
-                color: '#4FC3DC',
-                letterSpacing: '4px',
-                animation: 'glow 2s ease-in-out infinite',
+                color: '#FFFFFF',
+                letterSpacing: '8px',
+                animation: 'textGlow 3s ease-in-out infinite, float 6s ease-in-out infinite',
                 margin: 0,
-                marginTop: '-100px',
                 textAlign: 'center',
                 fontFamily: 'Arial, sans-serif',
+                textTransform: 'uppercase',
               }}>
-                DREAMY<br/>MELODIES
+                DREAMY
               </h1>
 
-              {/* CD DISC LOGO - SPINNING */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="/piano/piano.png" 
-                alt="Piano"
-                style={{ 
-                  width: '200px', 
-                  height: '200px',
-                  animation: 'spin 3s linear infinite',
-                }}
-              />
-              
-              {/* PLAY Button */}
+              {/* Sous-titre MELODIES */}
+              <h2 style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: '#FFFFFF',
+                letterSpacing: '6px',
+                animation: 'textGlow 3s ease-in-out infinite 0.5s, float 6s ease-in-out infinite 0.5s',
+                margin: '0 0 60px 0',
+                textAlign: 'center',
+                fontFamily: 'Arial, sans-serif',
+                textTransform: 'uppercase',
+              }}>
+                MELODIES
+              </h2>
+
+              {/* Bouton PLAY */}
               <button
                 onClick={startGame}
                 style={{
-                  width: '340px',
-                  height: '100px',
-                  background: 'rgba(79, 195, 220, 0.15)',
-                  border: '4px solid #4FC3DC',
-                  borderRadius: '60px',
+                  width: '200px',
+                  height: '60px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: '2px solid rgba(255, 255, 255, 0.8)',
+                  borderRadius: '30px',
                   cursor: 'pointer',
-                  fontSize: '48px',
+                  fontSize: '24px',
                   fontWeight: 'bold',
-                  color: '#4FC3DC',
+                  color: '#FFFFFF',
                   textTransform: 'uppercase',
-                  animation: 'buttonGlow 2s ease-in-out infinite',
+                  letterSpacing: '2px',
+                  animation: 'float 4s ease-in-out infinite, buttonGlow 2s ease-in-out infinite',
                   transition: 'all 0.3s ease',
                   backdropFilter: 'blur(10px)',
+                  marginBottom: '40px',
                 }}
                 onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
                   e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.background = 'rgba(79, 195, 220, 0.25)';
                 }}
                 onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
                   e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'rgba(79, 195, 220, 0.15)';
                 }}
               >
                 PLAY
               </button>
 
-              {/* Bottom Buttons Container */}
+              {/* Boutons SETTINGS et SCORES */}
               <div style={{
-                position: 'absolute',
-                bottom: '60px',
-                left: 0,
-                right: 0,
                 display: 'flex',
-                justifyContent: 'space-around',
-                alignItems: 'center',
-                padding: '0 40px',
+                gap: '30px',
+                marginTop: '20px',
               }}>
-                {/* SETTINGS Button (Cloud Style) */}
                 <button
                   style={{
-                    width: '140px',
-                    height: '70px',
-                    background: 'rgba(180, 230, 230, 0.6)',
-                    border: 'none',
-                    borderRadius: '40px',
+                    width: '120px',
+                    height: '40px',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.5)',
+                    borderRadius: '20px',
                     cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: '#2E5D5D',
+                    fontSize: '14px',
+                    fontWeight: 'normal',
+                    color: '#FFFFFF',
                     textTransform: 'uppercase',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                    letterSpacing: '1px',
                     transition: 'all 0.3s ease',
                     backdropFilter: 'blur(5px)',
+                    animation: 'float 5s ease-in-out infinite 1s',
                   }}
                   onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
                     e.currentTarget.style.transform = 'scale(1.05)';
-                    e.currentTarget.style.background = 'rgba(180, 230, 230, 0.8)';
                   }}
                   onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = 'rgba(180, 230, 230, 0.6)';
                   }}
                 >
                   SETTINGS
                 </button>
 
-                {/* SCORES Button (Star Style) */}
                 <button
                   style={{
-                    width: '140px',
-                    height: '70px',
-                    background: 'rgba(255, 220, 120, 0.6)',
-                    border: 'none',
-                    borderRadius: '15px',
+                    width: '120px',
+                    height: '40px',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.5)',
+                    borderRadius: '20px',
                     cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: '#8B6914',
+                    fontSize: '14px',
+                    fontWeight: 'normal',
+                    color: '#FFFFFF',
                     textTransform: 'uppercase',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                    letterSpacing: '1px',
                     transition: 'all 0.3s ease',
                     backdropFilter: 'blur(5px)',
-                    clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+                    animation: 'float 5s ease-in-out infinite 1.5s',
                   }}
                   onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
                     e.currentTarget.style.transform = 'scale(1.05)';
-                    e.currentTarget.style.background = 'rgba(255, 220, 120, 0.9)';
                   }}
                   onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = 'rgba(255, 220, 120, 0.6)';
                   }}
                 >
                   SCORES
@@ -886,6 +879,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
               color: 'white',
               fontWeight: 'bold',
               zIndex: 15,
+              textShadow: '0 0 20px rgba(255,255,255,0.8)',
             }}
           >
             {countdown}
@@ -976,6 +970,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                     justifyContent: 'center',
                     boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
                     color: '#000',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
                   }}
                 >
                   <X size={32} />
@@ -995,6 +998,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                     justifyContent: 'center',
                     boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
                     color: '#000',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
                   }}
                 >
                   <RotateCcw size={32} />
@@ -1014,6 +1026,15 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                     justifyContent: 'center',
                     boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
                     color: '#000',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
                   }}
                 >
                   {bgMusicEnabled ? <Volume2 size={28} /> : <VolumeX size={28} />}
