@@ -729,7 +729,9 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                backgroundImage: 'url(https://up6.cc/2025/10/176143735279391.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -749,6 +751,7 @@ const PianoTilesGame: React.FC<PianoTilesGameProps> = ({ onGameOver: _onGameOver
                 textAlign: 'center',
                 fontFamily: 'Arial, sans-serif',
                 textTransform: 'uppercase',
+                marginTop: '-80px',
               }}>
                 DREAMY
               </h1>
